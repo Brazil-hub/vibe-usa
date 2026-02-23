@@ -198,7 +198,7 @@ useEffect(() => {
     if (!file && previewUrl) return previewUrl;
     if (!file) return null;
     if (!user?.id) {
-      toast("Sua sessão ainda está carregando. Tente novamente.");
+      toast("Session is still loading. Try again.");
       return null;
     }
     const fileName = `${user.id}-${Date.now()}-${file.name}`;
@@ -206,7 +206,7 @@ useEffect(() => {
       .from("event-images")
       .upload(fileName, file);
     if (error) {
-      toast("Erro ao subir imagem.");
+      toast("Error uploading image.");
       return null;
     }
     const { data: urlData } = supabase.storage
@@ -242,26 +242,26 @@ const resolvedIsPublic =
 
   async function goToReview() {
     if (isSaving) return;
-    if (authLoading) return toast("Carregando sessão... tente de novo.");
+    if (authLoading) return toast("Loading session... try again.");
     if (!user?.id) {
-      toast("Você precisa estar logado para criar evento.");
+      toast("You need to be logged in to create an event.");
       navigate("/login", { replace: true });
       return;
     }
-    if (!title) return toast("Título obrigatório.");
-    if (!eventDate) return toast("Data obrigatória.");
+    if (!title) return toast("Title is required.");
+    if (!eventDate) return toast("Date is required.");
     if (state?.event_format === "in_person" && !locationField)
-      return toast("Endereço obrigatório.");
+      return toast("Address is required.");
     if (state?.event_format === "online" && !onlineUrl)
-      return toast("Link obrigatório.");
+      return toast("Link is required.");
     if (state?.is_paid && (!price || Number(price) <= 0))
-      return toast("Preço inválido.");
+      return toast("Invalid price.");
 
     setIsSaving(true);
     const finalImageUrl = await uploadImage();
     if (!finalImageUrl) {
       setIsSaving(false);
-      return toast("Escolha uma imagem válida.");
+      return toast("Please choose a valid image.");
     }
 
     const draft = {
@@ -288,16 +288,16 @@ const resolvedIsPublic =
   return (
     <div className={styles.container}>
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Criar evento</div>
-        <div className={styles.processStep}>Passo 4 de 5 · Detalhes</div>
+        <div className={styles.processTitle}>Create Event</div>
+        <div className={styles.processStep}>Step 4 of 5 · Details</div>
       </div>
 
-      <h2 className={styles.title}>Detalhes do evento</h2>
+      <h2 className={styles.title}>Event Details</h2>
 
       <div className={styles.card}>
         <input
           className={styles.input}
-          placeholder="Título"
+          placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
         />
@@ -329,15 +329,15 @@ const resolvedIsPublic =
           value={category}
           onChange={(e) => setCategory(e.target.value)}
         >
-          <option value="party">Festa</option>
+          <option value="party">Party</option>
           <option value="show">Show</option>
-          <option value="teather">Teatro</option>
-          <option value="birthday">Aniversário</option>
-          <option value="class">Aulas-Cursos</option>
-          <option value="workshop">workshop</option>
-          <option value="sport">Esporte</option>
-          <option value="art">Arte</option>
-          <option value="culture">Cultura</option>
+          <option value="teather">Theater</option>
+          <option value="birthday">Birthday</option>
+          <option value="class">Classes</option>
+          <option value="workshop">Workshop</option>
+          <option value="sport">Sports</option>
+          <option value="art">Art</option>
+          <option value="culture">Culture</option>
         </select>
       </div>
 
@@ -345,7 +345,7 @@ const resolvedIsPublic =
         <div className={styles.card}>
           <input
             className={styles.input}
-            placeholder="Endereço"
+            placeholder="Address"
             value={locationField}
             onChange={(e) => setLocationField(e.target.value)}
           />
@@ -356,7 +356,7 @@ const resolvedIsPublic =
         <div className={styles.card}>
           <input
             className={styles.input}
-            placeholder="URL da transmissão"
+            placeholder="Stream URL"
             value={onlineUrl}
             onChange={(e) => setOnlineUrl(e.target.value)}
           />
@@ -369,7 +369,7 @@ const resolvedIsPublic =
           <input
             className={styles.input}
             type="number"
-            placeholder="Preço"
+            placeholder="Price"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
           />
@@ -381,7 +381,7 @@ const resolvedIsPublic =
           {previewUrl ? (
             <img src={previewUrl} className={styles.preview} alt="preview" />
           ) : (
-            "Escolha uma imagem de capa"
+            "Choose a cover image"
           )}
           <input
             type="file"
@@ -393,7 +393,7 @@ const resolvedIsPublic =
       </div>
 
       <Button onClick={goToReview} disabled={isSaving}>
-        {isSaving ? "Processando..." : "Revisar evento"}
+        {isSaving ? "Processing..." : "Review Event"}
       </Button>
     </div>
   );

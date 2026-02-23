@@ -56,7 +56,7 @@ export default function OverviewPage() {
 
     if (error || !data) {
       console.error("Erro ao carregar evento para edição:", error);
-      showToast("Erro ao abrir evento para edição", "error");
+      showToast("Error opening event for editing", "error");
       return;
     }
 
@@ -86,9 +86,9 @@ export default function OverviewPage() {
   ========================== */
   async function handleCancelEvent(eventId) {
     openConfirm({
-      title: "Cancelar evento",
+      title: "Cancel Event",
       message:
-        "Tem certeza que deseja cancelar este evento? Ele não ficará mais visível ao público.",
+        "Are you sure you want to cancel this event? It will no longer be visible to the public.",
       danger: true,
       onConfirm: async () => {
         closeConfirm();
@@ -101,11 +101,11 @@ export default function OverviewPage() {
 
         if (error) {
           console.error("Erro ao cancelar evento:", error);
-          showToast("Não foi possível cancelar o evento", "error");
+          showToast("Couldn't cancel the event", "error");
           return;
         }
 
-        showToast("Evento cancelado com sucesso");
+        showToast("Event canceled successfully");
 
         setTimeout(() => {
           window.location.reload();
@@ -119,9 +119,9 @@ export default function OverviewPage() {
   ========================== */
   async function handleDeleteEvent(eventId) {
     openConfirm({
-      title: "Deletar evento",
+      title: "Delete Event",
       message:
-        "Isso vai apagar o evento definitivamente. Essa ação não pode ser desfeita.",
+        "This will permanently delete the event. This action cannot be undone.",
       danger: true,
       onConfirm: async () => {
         closeConfirm();
@@ -135,11 +135,11 @@ export default function OverviewPage() {
 
         if (error) {
           console.error("Erro ao deletar evento:", error);
-          showToast("Não foi possível deletar o evento", "error");
+          showToast("Couldn't delete the event", "error");
           return;
         }
 
-        showToast("Evento deletado com sucesso");
+        showToast("Event deleted successfully");
 
         setTimeout(() => {
           window.location.reload();
@@ -153,8 +153,8 @@ export default function OverviewPage() {
   ========================== */
   async function handleArchiveEvent(eventId) {
     openConfirm({
-      title: "Arquivar evento",
-      message: "Arquivar este evento? Ele será removido do dashboard principal.",
+      title: "Archive Event",
+      message: "Archive this event? It will be removed from your main dashboard.",
       danger: false,
       onConfirm: async () => {
         closeConfirm();
@@ -167,11 +167,11 @@ export default function OverviewPage() {
 
         if (error) {
           console.error("Erro ao arquivar evento:", error);
-          showToast("Não foi possível arquivar o evento", "error");
+          showToast("Couldn't archive the event", "error");
           return;
         }
 
-        showToast("Evento arquivado");
+        showToast("Event archived");
 
         setTimeout(() => {
           window.location.reload();
@@ -205,7 +205,7 @@ export default function OverviewPage() {
 
       if (eventsError) {
         console.error("Erro carregando eventos:", eventsError);
-        showToast("Erro ao carregar eventos", "error");
+        showToast("Error loading events", "error");
         setLoading(false);
         return;
       }
@@ -300,28 +300,28 @@ export default function OverviewPage() {
   if (loading) {
     return (
       <div className="overview-wrapper">
-        <h2 className="overview-title">Visão Geral</h2>
-        <p className="no-events">Carregando…</p>
+        <h2 className="overview-title">Overview</h2>
+        <p className="no-events">Loading…</p>
       </div>
     );
   }
 
   return (
     <div className="overview-wrapper">
-      <h2 className="overview-title">Visão Geral</h2>
+      <h2 className="overview-title">Overview</h2>
 
       <div className="stats-grid">
-        <StatCard label="Eventos Criados" value={stats.eventsCount} />
-        <StatCard label="Ingressos Vendidos" value={stats.ticketsCount} />
+        <StatCard label="Events Created" value={stats.eventsCount} />
+        <StatCard label="Tickets Sold" value={stats.ticketsCount} />
         <StatCard label="RSVPs" value={stats.rsvpsCount} />
         <StatCard label="Check-ins" value={stats.checkinsCount} />
       </div>
 
       <section className="events-section">
-        <h3 className="events-section-title">Performance por evento</h3>
+        <h3 className="events-section-title">Event Performance</h3>
 
         {eventsWithMetrics.length === 0 && (
-          <p className="no-events">Você ainda não criou eventos.</p>
+          <p className="no-events">You haven't created any events yet.</p>
         )}
 
         {eventsWithMetrics.map((ev) => (
@@ -375,57 +375,57 @@ function EventPerformanceCard({
   onArchive,
 }) {
   const date = event.event_date
-    ? new Date(event.event_date).toLocaleDateString("pt-BR")
-    : "Sem data";
+    ? new Date(event.event_date).toLocaleDateString("en-US")
+    : "No date";
 
   return (
     <div className="event-card">
       {event.image_url && (
-        <img src={event.image_url} className="event-cover" alt="capa do evento" />
+        <img src={event.image_url} className="event-cover" alt="event cover" />
       )}
 
       <div className="event-header">
         <div>
-          <p className="event-title">{event.title || "Evento sem título"}</p>
+          <p className="event-title">{event.title || "Untitled Event"}</p>
           <p className="event-meta">
-            {date} · {event.location || "Local a definir"}
+            {date} · {event.location || "Venue TBD"}
           </p>
 
           <p className="event-privacy">
-            {event.is_private ? "🔒 Privado" : "🌎 Público"}
+            {event.is_private ? "🔒 Private" : "🌎 Public"}
           </p>
         </div>
       </div>
 
       <div className="event-metrics-row">
-        <MetricPill label="Ingressos" value={event.ticketsCount} />
+        <MetricPill label="Tickets" value={event.ticketsCount} />
         <MetricPill label="RSVPs" value={event.rsvpsCount} />
         <MetricPill label="Check-ins" value={event.checkinsCount} />
       </div>
 
       <div className="event-actions-row">
         <button className="event-action-btn" onClick={onManage}>
-          Gerenciar
+          Manage
         </button>
 
         <button className="event-action-btn secondary" onClick={onEdit}>
-          Editar
+          Edit
         </button>
 
         {event.status !== "cancelled" && (
           <button className="event-action-btn danger" onClick={onCancel}>
-            Cancelar
+            Cancel
           </button>
         )}
 
         {["draft", "pending"].includes(event.status) && (
           <button className="event-action-btn danger" onClick={onDelete}>
-            Deletar
+            Delete
           </button>
         )}
 
         <button className="event-action-btn secondary" onClick={onArchive}>
-          Arquivar
+          Archive
         </button>
       </div>
     </div>

@@ -116,8 +116,8 @@ export default function EventPostComposer({
         className={styles.composerInput}
         placeholder={
           disabled
-            ? "Confirme presença para comentar neste evento."
-            : "Escreva algo…"
+            ? "RSVP to comment on this event."
+            : "Write something…"
         }
         value={text}
         onChange={(e) => setText(e.target.value)}
@@ -150,10 +150,10 @@ export default function EventPostComposer({
           disabled={disabled || submitting || posted || (!text && !imageUrl)}
         >
           {posted
-            ? "Post enviado ✅"
+            ? "Post sent ✅"
             : isPrivate || isOrganizer
-            ? "Postar"
-            : "Postar Comentário"}
+            ? "Post"
+            : "Post Comment"}
         </button>
 
       </div>

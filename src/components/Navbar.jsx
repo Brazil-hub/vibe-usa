@@ -50,25 +50,25 @@ export default function Navbar() {
       {/* SIDE MENU */}
       <aside className={`${styles.sideMenu} ${menuOpen ? styles.open : ""}`}>
         <button className={styles.menuItem} onClick={() => go("/feed")}>
-          Agenda
+          Events
         </button>
 
         <button className={styles.menuItem} onClick={() => go("/create/visibility")}>
-          Criar evento
+          Create Event
         </button>
 
         <button className={styles.menuItem} onClick={() => go("/dashboard")}>
-          Meus eventos
+          My Events
         </button>
 
         <button className={styles.menuItem} onClick={() => go("/profile")}>
-          Perfil
+          Profile
         </button>
 
         <div className={styles.spacer} />
 
         <button className={styles.logout} onClick={handleLogout}>
-          Sair
+          Sign Out
         </button>
       </aside>
     </div>

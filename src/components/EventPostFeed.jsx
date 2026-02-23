@@ -193,7 +193,7 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
 
   return (
     <div className={styles.feedBlock}>
-      <h3 className={styles.sectionTitle}>Posts do evento</h3>
+      <h3 className={styles.sectionTitle}>Event Posts</h3>
 
       <EventPostComposer
         eventId={eventId}
@@ -203,11 +203,11 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
         onPosted={loadPosts}
       />
 
-      {loading && <p className={styles.placeholderText}>Carregando…</p>}
+      {loading && <p className={styles.placeholderText}>Loading…</p>}
 
       {!loading && posts.length === 0 && (
         <p className={styles.placeholderText}>
-          Ainda não tem posts. Comece a conversa ✨
+          No posts yet. Start the conversation ✨
         </p>
       )}
 

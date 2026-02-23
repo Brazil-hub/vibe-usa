@@ -18,20 +18,20 @@ export default function PaymentSelect() {
   return (
     <div className={styles.container}>
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Criar evento</div>
-        <div className={styles.processStep}>Passo 3 de 5 · Pagamento</div>
+        <div className={styles.processTitle}>Create Event</div>
+        <div className={styles.processStep}>Step 3 of 5 · Payment</div>
       </div>
 
       <div className={styles.content}>
-        <div className={styles.title}>O evento será...</div>
+        <div className={styles.title}>This event will be...</div>
 
         <div className={styles.cards}>
           <div className={styles.card} onClick={() => choose(false)}>
             <span className={styles.icon}>✨</span>
             <div className={styles.textGroup}>
-              <div className={styles.cardTitle}>Gratuito</div>
+              <div className={styles.cardTitle}>Free</div>
               <div className={styles.cardDescription}>
-                As pessoas entram sem pagar nada.
+                Anyone can join at no cost.
               </div>
             </div>
           </div>
@@ -39,9 +39,9 @@ export default function PaymentSelect() {
           <div className={styles.card} onClick={() => choose(true)}>
             <span className={styles.icon}>💰</span>
             <div className={styles.textGroup}>
-              <div className={styles.cardTitle}>Pago</div>
+              <div className={styles.cardTitle}>Paid</div>
               <div className={styles.cardDescription}>
-                Os participantes compram ingresso.
+                Attendees purchase a ticket.
               </div>
             </div>
           </div>

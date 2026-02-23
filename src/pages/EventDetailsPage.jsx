@@ -144,11 +144,9 @@ useEffect(() => {
   if (!user) {
     return (
       <div className={styles.notFound}>
-        <h2>🔒 Evento privado</h2>
+        <h2>🔒 Private Event</h2>
         <p>
-          Este evento é privado.
-          <br />
-          Para acessar, entre ou crie uma conta no VibraGyn.
+          This event is private. Sign in or create an account to access it.
         </p>
 
         <button
@@ -162,7 +160,7 @@ useEffect(() => {
 }}
 
         >
-          Entrar para acessar
+          Sign in to access
         </button>
       </div>
     );
@@ -171,8 +169,8 @@ useEffect(() => {
   // 🔹 USUÁRIO LOGADO (fluxo que já existia)
   return (
     <div className={styles.notFound}>
-      <h2>🔒 Evento privado</h2>
-      <p>Você recebeu um convite para este evento.</p>
+      <h2>🔒 Private Event</h2>
+      <p>You've been invited to this event.</p>
 
       <button
   className={styles.primaryButton}
@@ -181,7 +179,7 @@ useEffect(() => {
     setAcceptedInvite(true);
   }}
 >
-  Entrar no evento
+  Join event
 </button>
 
     </div>
@@ -200,15 +198,15 @@ useEffect(() => {
   const date = event.event_date ? new Date(event.event_date) : null;
 
   const dateLabel = date
-    ? date.toLocaleDateString("pt-BR", {
+    ? date.toLocaleDateString("en-US", {
         weekday: "short",
         day: "2-digit",
         month: "short",
       })
-    : "Data a definir";
+    : "Date TBD";
 
   const timeLabel = date
-    ? date.toLocaleTimeString("pt-BR", {
+    ? date.toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       })
@@ -216,8 +214,8 @@ useEffect(() => {
 
   const priceLabel =
     isPaid && event.price
-      ? `R$ ${Number(event.price).toFixed(2).replace(".", ",")}`
-      : "Gratuito";
+      ? `$${Number(event.price).toFixed(2)}`
+      : "Free";
 
   const goingCount = attendance.going.length;
   const maybeCount = attendance.maybe.length;
@@ -250,7 +248,7 @@ useEffect(() => {
 
   async function updateRsvp(newStatus) {
     if (!user) {
-  showToast("Entre ou crie uma conta para confirmar presença 🔒");
+  showToast("Sign in or create an account to RSVP 🔒");
   return;
   }
     if (rsvpLoading) return;
@@ -260,20 +258,20 @@ useEffect(() => {
       if (newStatus === rsvpStatus) {
         await deleteRsvp(id);
         setRsvpStatus(null);
-        showToast("RSVP removido.");
+        showToast("RSVP removed.");
       } else {
         const { error } = await setRsvp(id, newStatus);
         if (!error) {
           setRsvpStatus(newStatus);
-          if (newStatus === "going") showToast("Você vai! 🎉");
-          if (newStatus === "maybe") showToast("Salvo como 'Talvez' ⭐");
-          if (newStatus === "no") showToast("Marcado como 'Não vou'.");
+          if (newStatus === "going") showToast("You're in! 🎉");
+          if (newStatus === "maybe") showToast("Saved as 'Maybe' ⭐");
+          if (newStatus === "no") showToast("Marked as 'Not going'.");
         }
       }
 
       await loadAttendance(id);
     } catch {
-      showToast("Erro ao salvar RSVP.");
+      showToast("Error saving RSVP.");
     }
 
     setRsvpLoading(false);
@@ -285,12 +283,12 @@ useEffect(() => {
     if (navigator.share) {
       navigator.share({
         title: event.title,
-        text: "Vem comigo nesse evento?",
+        text: "Join me at this event?",
         url,
       });
     } else {
       navigator.clipboard.writeText(url);
-      showToast("Link copiado 📎");
+      showToast("Link copied 📎");
     }
   }
 
@@ -308,13 +306,13 @@ useEffect(() => {
           {hasImage ? (
             <img
               src={event.image_url}
-              alt="Capa do evento"
+              alt="Event cover"
               className={styles.cover}
             />
           ) : (
             <div className={styles.coverPlaceholder}>
               <span className={styles.coverEmoji}>✨</span>
-              <span className={styles.coverText}>Evento sem capa</span>
+              <span className={styles.coverText}>No cover image</span>
             </div>
           )}
 
@@ -333,7 +331,7 @@ useEffect(() => {
     )}
 
     <span className={styles.chip}>
-      {isOnline ? "Online" : "Presencial"}
+      {isOnline ? "Online" : "In-Person"}
     </span>
 
     <span className={styles.chipPrice}>{priceLabel}</span>
@@ -347,11 +345,10 @@ useEffect(() => {
        {/* RSVP — CTA PRINCIPAL */}
 {event?.is_private && !user ? (
   <div className={styles.inviteGateCard}>
-    <h3>Você foi convidado para este evento</h3>
+    <h3>You've been invited to this event</h3>
 
     <p>
-      Para confirmar presença, comentar ou interagir,
-      é necessário entrar ou criar uma conta.
+      To RSVP, comment, or interact, you'll need to sign in or create an account.
     </p>
 
     <button
@@ -364,7 +361,7 @@ useEffect(() => {
         navigate("/login");
       }}
     >
-      Entrar para responder
+      Sign in to respond
     </button>
   </div>
 ) : (
@@ -376,7 +373,7 @@ useEffect(() => {
         rsvpStatus === "going" ? styles.activeGoing : ""
       }`}
     >
-      Eu vou 🔥
+      I'm in 🔥
     </Button>
 
     <div className={styles.rsvpSecondaryRow}>
@@ -387,7 +384,7 @@ useEffect(() => {
           rsvpStatus === "maybe" ? styles.activeMaybe : ""
         }`}
       >
-        Talvez ⭐
+        Maybe ⭐
       </Button>
 
       <Button
@@ -397,7 +394,7 @@ useEffect(() => {
           rsvpStatus === "no" ? styles.activeNo : ""
         }`}
       >
-        Não ❌
+        Not going ❌
       </Button>
     </div>
   </div>
@@ -407,7 +404,7 @@ useEffect(() => {
         {/* INFO */}
         <section className={styles.section}>
           <div className={styles.infoCard}>
-            <h3 className={styles.sectionTitle}>Onde vai rolar</h3>
+            <h3 className={styles.sectionTitle}>Where it's happening</h3>
 
             {!isOnline && event.location && (
               <p className={styles.locationRow}>📍 {event.location}</p>
@@ -419,11 +416,11 @@ useEffect(() => {
           </div>
 
           <div className={styles.infoCard}>
-            <h3 className={styles.sectionTitle}>Sobre o evento</h3>
+            <h3 className={styles.sectionTitle}>About this event</h3>
             <div
               className={styles.description}
               dangerouslySetInnerHTML={{
-                __html: event.description || "Sem descrição detalhada.",
+                __html: event.description || "No description available.",
               }}
             />
 
@@ -435,9 +432,9 @@ useEffect(() => {
           <section className={styles.section}>
             <div className={styles.attendanceCard}>
               <div className={styles.attendanceCounters}>
-                <span>🎉 {goingCount} indo</span>
-                <span>⭐ {maybeCount} talvez</span>
-                <span>❌ {noCount} não</span>
+                <span>🎉 {goingCount} going</span>
+                <span>⭐ {maybeCount} maybe</span>
+                <span>❌ {noCount} not going</span>
               </div>
 
               <div
@@ -492,7 +489,7 @@ useEffect(() => {
         <section className={styles.section}>
           <div className={styles.organizerCard}>
             <Button onClick={handleShare} className={styles.shareButton}>
-              Compartilhar evento 🔗
+              Share Event 🔗
             </Button>
           </div>
         </section>
@@ -509,7 +506,7 @@ useEffect(() => {
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className={styles.attendeesTitle}>
-              Quem vai ({attendance.going.length})
+              Going ({attendance.going.length})
             </h3>
 
             <div className={styles.attendeesList}>
@@ -544,7 +541,7 @@ useEffect(() => {
               className={styles.closeButton}
               onClick={() => setShowAttendees(false)}
             >
-              Fechar
+              Close
             </button>
           </div>
         </div>

@@ -7,7 +7,7 @@ export default function PublicTopBar() {
   return (
     <div className={styles.wrapper}>
       <button className={styles.back} onClick={() => navigate("/")}>
-        Agenda
+        Events
       </button>
 
       <button className={styles.brand} onClick={() => navigate("/")}>
@@ -15,7 +15,7 @@ export default function PublicTopBar() {
       </button>
 
       <button className={styles.login} onClick={() => navigate("/login")}>
-        Entrar
+        Sign In
       </button>
     </div>
   );

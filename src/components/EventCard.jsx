@@ -7,7 +7,7 @@ export default function EventCard({ event }) {
 
         const d = new Date(date);
         return d
-          .toLocaleDateString("pt-BR", { weekday: "short" })
+          .toLocaleDateString("en-US", { weekday: "short" })
           .replace(".", "")
           .replace(/^./, c => c.toUpperCase());
       }
@@ -48,7 +48,7 @@ export default function EventCard({ event }) {
             </div>
           ) : (
             <div className={styles.price}>
-              Gratuito
+              Free
             </div>
           )}
         </div>

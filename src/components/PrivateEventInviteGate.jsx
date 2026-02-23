@@ -33,7 +33,7 @@ export default function PrivateEventInviteGate({ event, onAccessGranted }) {
 
     if (isInvalid()) {
       alert(
-        "Este convite não é mais válido. Solicite um novo link ao organizador."
+        "This invite is no longer valid. Ask the organizer for a new link."
       );
       setLoading(false);
       return;
@@ -46,14 +46,14 @@ export default function PrivateEventInviteGate({ event, onAccessGranted }) {
 
   return (
     <div style={{ padding: 16, border: "1px solid #ddd", borderRadius: 12 }}>
-      <div style={{ fontSize: 13, opacity: 0.7 }}>🔒 Evento privado</div>
-      <p>Você recebeu um convite para este evento</p>
+      <div style={{ fontSize: 13, opacity: 0.7 }}>🔒 Private Event</div>
+      <p>You've been invited to this event</p>
 
       <h3>{event.title}</h3>
       <p>{event.description}</p>
 
       <button onClick={handleEnter} disabled={loading}>
-        {loading ? "Entrando..." : "Entrar no evento"}
+        {loading ? "Joining..." : "Join Event"}
       </button>
     </div>
   );

@@ -39,7 +39,7 @@ export default function ReviewEvent() {
 
   async function publish() {
   if (authLoading) {
-    showToast("Carregando sessão...");
+    showToast("Loading session...");
     return;
   }
 
@@ -81,12 +81,12 @@ export default function ReviewEvent() {
   }
 
   if (error) {
-    showToast("Erro ao salvar evento");
+    showToast("Error saving event");
     return;
   }
 
   sessionStorage.removeItem("vg_create_event_draft");
-  showToast(eventId ? "Evento atualizado ✨" : "Evento criado ✨");
+  showToast(eventId ? "Event updated ✨" : "Event created ✨");
   setTimeout(() => navigate("/"), 800);
 }
 
@@ -97,25 +97,25 @@ export default function ReviewEvent() {
   return (
     <div className={styles.container}>
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Criar evento</div>
-        <div className={styles.processStep}>Passo 5 de 5 · Revisão</div>
+        <div className={styles.processTitle}>Create Event</div>
+        <div className={styles.processStep}>Step 5 of 5 · Review</div>
       </div>
 
-      <h2 className={styles.title}>Revisar evento</h2>
+      <h2 className={styles.title}>Review Event</h2>
 
       {state.image_url && (
-        <img src={state.image_url} className={styles.cover} alt="capa" />
+        <img src={state.image_url} className={styles.cover} alt="cover" />
       )}
 
-      <div className={styles.card}><span>Título</span><p>{state.title}</p></div>
-      <div className={styles.card}><span>Descrição</span><p>{state.description}</p></div>
-      <div className={styles.card}><span>Data</span><p>{state.event_date}</p></div>
-      <div className={styles.card}><span>Categoria</span><p>{state.category}</p></div>
-      <div className={styles.card}><span>Formato</span><p>{state.event_format}</p></div>
-      <div className={styles.card}><span>Visibilidade</span><p>{state.is_public ? "Público" : "Privado"}</p></div>
+      <div className={styles.card}><span>Title</span><p>{state.title}</p></div>
+      <div className={styles.card}><span>Description</span><p>{state.description}</p></div>
+      <div className={styles.card}><span>Date</span><p>{state.event_date}</p></div>
+      <div className={styles.card}><span>Category</span><p>{state.category}</p></div>
+      <div className={styles.card}><span>Format</span><p>{state.event_format}</p></div>
+      <div className={styles.card}><span>Visibility</span><p>{state.is_public ? "Public" : "Private"}</p></div>
 
       {state.location && (
-        <div className={styles.card}><span>Endereço</span><p>{state.location}</p></div>
+        <div className={styles.card}><span>Address</span><p>{state.location}</p></div>
       )}
 
       {state.online_url && (
@@ -123,8 +123,8 @@ export default function ReviewEvent() {
       )}
 
       <div className={styles.card}>
-        <span>Preço</span>
-        <p>{state.is_paid ? `R$ ${state.price}` : "Gratuito"}</p>
+        <span>Price</span>
+        <p>{state.is_paid ? `$${state.price}` : "Free"}</p>
       </div>
 
       <div className={styles.buttons}>
@@ -135,10 +135,10 @@ export default function ReviewEvent() {
       })
     }
   >
-    Voltar
+    Back
   </Button>
 
-  <Button onClick={publish}>Publicar</Button>
+  <Button onClick={publish}>Publish</Button>
 </div>
 
 

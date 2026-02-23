@@ -34,22 +34,22 @@ export default function Login() {
 
     if (msg.includes("already registered")) {
       return {
-        title: "Conta já existe",
-        message: "Este email já possui uma conta. Faça login.",
+        title: "Account already exists",
+        message: "This email is already registered. Sign in instead.",
       };
     }
 
     if (msg.includes("invalid login credentials")) {
       return {
-        title: "Dados incorretos",
-        message: "Email ou senha incorretos.",
+        title: "Incorrect credentials",
+        message: "Email or password is incorrect.",
       };
     }
 
     if (msg.includes("password")) {
       return {
-        title: "Senha inválida",
-        message: "A senha deve ter pelo menos 6 caracteres.",
+        title: "Invalid password",
+        message: "Password must be at least 6 characters.",
       };
     }
 
@@ -57,8 +57,8 @@ export default function Login() {
       title: "Erro",
       message:
         context === "signup"
-          ? "Não foi possível criar a conta. Tente novamente."
-          : "Não foi possível entrar. Tente novamente.",
+          ? "Couldn't create account. Please try again."
+          : "Couldn't sign in. Please try again.",
     };
   }
 
@@ -91,8 +91,8 @@ export default function Login() {
         localStorage.removeItem("postLoginRedirect");
 
         openModal(
-          "Conta criada 🎉",
-          "Sua conta foi criada com sucesso. Você já pode entrar.",
+          "Account created 🎉",
+          "Your account was created successfully. You can now sign in.",
           () => navigate("/")
         );
       }
@@ -118,7 +118,7 @@ export default function Login() {
     } catch (err) {
       openModal(
         "Erro",
-        "Não foi possível entrar com Google. Tente novamente."
+        "Couldn't sign in with Google. Please try again."
       );
       setLoading(false);
     }
@@ -127,7 +127,7 @@ export default function Login() {
   return (
     <div className={styles.container}>
       <h2 className={styles.title}>
-        {mode === "login" ? "Entrar" : "Criar conta"}
+        {mode === "login" ? "Sign In" : "Create Account"}
       </h2>
 
       <form onSubmit={handleSubmit} className={styles.form}>
@@ -141,7 +141,7 @@ export default function Login() {
 
         <input
           type="password"
-          placeholder="Senha"
+          placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -149,27 +149,27 @@ export default function Login() {
 
         <button type="submit" disabled={loading}>
           {loading
-            ? "Aguarde..."
+            ? "Please wait..."
             : mode === "login"
-            ? "Entrar"
-            : "Criar conta"}
+            ? "Sign In"
+            : "Create Account"}
         </button>
       </form>
 
-      <div className={styles.divider}>ou</div>
+      <div className={styles.divider}>or</div>
 
       <button
         className={styles.googleButton}
         onClick={handleGoogleLogin}
         disabled={loading}
       >
-        Continuar com Google
+        Continue with Google
       </button>
 
       <p className={styles.switch}>
         {mode === "login" ? (
           <>
-            Não tem conta?{" "}
+            Don't have an account?{" "}
             <button
               type="button"
               onClick={() => {
@@ -177,12 +177,12 @@ export default function Login() {
                 setPassword("");
               }}
             >
-              Criar agora
+              Sign up
             </button>
           </>
         ) : (
           <>
-            Já tem conta?{" "}
+            Already have an account?{" "}
             <button
               type="button"
               onClick={() => {
@@ -190,7 +190,7 @@ export default function Login() {
                 setPassword("");
               }}
             >
-              Entrar
+              Sign In
             </button>
           </>
         )}

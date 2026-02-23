@@ -11,16 +11,16 @@ import OnboardingCard from "../components/OnboardingCard";
 const PAGE_SIZE = 6;
 
 const CATEGORY_LABELS = {
-  all: "Todos",
-  party: "Festa",
+  all: "All",
+  party: "Party",
   show: "Show",
-  birthday: "Aniversário",
-  class: "Aulas & Cursos",
+  birthday: "Birthday",
+  class: "Classes",
   workshop: "Workshop",
-  sport: "Esporte",
-  art: "Arte",
-  culture: "Cultura",
-  teather: "Teatro",
+  sport: "Sports",
+  art: "Art",
+  culture: "Culture",
+  teather: "Theater",
 };
 
 
@@ -34,25 +34,23 @@ function normalizeEvent(ev) {
     const d = new Date(ev.event_date);
 
     weekday_label = d
-      .toLocaleDateString("pt-BR", { weekday: "short" })
+      .toLocaleDateString("en-US", { weekday: "short" })
       .replace(".", "")
       .replace(/^./, (c) => c.toUpperCase());
 
     date_label = d
-      .toLocaleDateString("pt-BR", {
+      .toLocaleDateString("en-US", {
         day: "2-digit",
         month: "short",
       })
-      .replace("de ", "")
       .replace(".", "");
 
     time_label = d
-      .toLocaleTimeString("pt-BR", {
+      .toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       })
-      .replace(":00", "h")
-      .replace(":", "h");
+;
   }
 
   return {
@@ -183,36 +181,36 @@ export default function HomePage() {
         )}
 
         {loading && (
-          <p className={styles.info}>✨ Carregando sua vibe... ✨</p>
+          <p className={styles.info}>✨ Loading your vibe... ✨</p>
         )}
 
         {!loading && events.length === 0 && (
-          <p className={styles.info}>Nenhum evento encontrado.</p>
+          <p className={styles.info}>No events found.</p>
         )}
 
         {!loading && events.length > 0 && (
           <div className={styles.categoryFilter}>
-            <button onClick={() => setSelectedCategory("all")}>Todos</button>
-            <button onClick={() => setSelectedCategory("party")}>Festa</button>
+            <button onClick={() => setSelectedCategory("all")}>All</button>
+            <button onClick={() => setSelectedCategory("party")}>Party</button>
             <button onClick={() => setSelectedCategory("show")}>Show</button>
             <button onClick={() => setSelectedCategory("birthday")}>
-              Aniversário
+              Birthday
             </button>
             <button onClick={() => setSelectedCategory("class")}>
-              Aulas-Cursos
+              Classes
             </button>
             <button onClick={() => setSelectedCategory("workshop")}>
               Workshop
             </button>
             <button onClick={() => setSelectedCategory("sport")}>
-              Esporte
+              Sports
             </button>
-            <button onClick={() => setSelectedCategory("art")}>Arte</button>
+            <button onClick={() => setSelectedCategory("art")}>Art</button>
             <button onClick={() => setSelectedCategory("culture")}>
-              Cultura
+              Culture
             </button>
             <button onClick={() => setSelectedCategory("teather")}>
-              Teatro
+              Theater
             </button>
           </div>
         )}

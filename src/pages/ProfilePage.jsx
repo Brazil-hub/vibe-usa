@@ -27,7 +27,7 @@ export default function ProfilePage() {
   // 🔒 ADICIONADO: handler EXISTENTE para não quebrar mobile
   async function handleDeleteAccount() {
     setLoadingDelete(true);
-    alert("Função de exclusão em manutenção.");
+    alert("Account deletion is currently under maintenance.");
     setLoadingDelete(false);
     setShowDeleteModal(false);
   }
@@ -61,10 +61,10 @@ export default function ProfilePage() {
     };
   }, [user]);
 
-  if (!user) return <p>Faça login novamente.</p>;
+  if (!user) return <p>Please log in again.</p>;
 
   if (!profile)
-    return <p style={{ padding: 20 }}>Carregando perfil…</p>;
+    return <p style={{ padding: 20 }}>Loading profile…</p>;
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(
     profile?.name || profile?.email || "User"
@@ -114,7 +114,7 @@ export default function ProfilePage() {
       setProfile((p) => ({ ...p, avatar_url: data.publicUrl }));
     } catch (err) {
       console.error(err);
-      setAvatarError("Erro ao atualizar avatar.");
+      setAvatarError("Error updating photo.");
       setAvatarPreview(null);
     } finally {
       setUploadingAvatar(false);
@@ -123,7 +123,7 @@ export default function ProfilePage() {
 
   async function handleSaveProfile() {
     if (!nameDraft.trim()) {
-      setProfileError("O nome não pode ficar vazio.");
+      setProfileError("Name can't be empty.");
       return;
     }
 
@@ -142,7 +142,7 @@ export default function ProfilePage() {
       setShowEditModal(false);
     } catch (err) {
       console.error(err);
-      setProfileError("Erro ao salvar perfil.");
+      setProfileError("Error saving profile.");
     } finally {
       setSavingProfile(false);
     }
@@ -161,7 +161,7 @@ export default function ProfilePage() {
       <div className={styles.header}>
         <img src={avatar} className={styles.avatarSmall} />
         <div>
-          <h2 className={styles.title}>Meu Perfil</h2>
+          <h2 className={styles.title}>My Profile</h2>
           <p className={styles.email}>{profile.email}</p>
         </div>
       </div>
@@ -176,14 +176,14 @@ export default function ProfilePage() {
           onClick={openFilePicker}
           disabled={uploadingAvatar}
         >
-          {uploadingAvatar ? "Atualizando foto..." : "Trocar foto"}
+          {uploadingAvatar ? "Updating photo..." : "Change Photo"}
         </button>
 
         {avatarError && <p className={styles.error}>{avatarError}</p>}
       </div>
 
       <div className={styles.info}>
-        <p><strong>Nome:</strong> {profile.name || "Sem nome"}</p>
+        <p><strong>Name:</strong> {profile.name || "No name"}</p>
         <p><strong>Email:</strong> {profile.email}</p>
       </div>
 
@@ -192,18 +192,18 @@ export default function ProfilePage() {
           className={styles.buttonBlue}
           onClick={() => setShowEditModal(true)}
         >
-          Editar Perfil
+          Edit Profile
         </button>
 
         <button className={styles.buttonGray} onClick={logoutUser}>
-          Sair
+          Sign Out
         </button>
 
         <button
           className={styles.buttonRed}
           onClick={() => setShowDeleteModal(true)}
         >
-          Excluir Conta
+          Delete Account
         </button>
       </div>
 
@@ -232,10 +232,10 @@ export default function ProfilePage() {
               textAlign: "center",
             }}
           >
-            <h3 style={{ marginTop: 0 }}>Excluir conta</h3>
+            <h3 style={{ marginTop: 0 }}>Delete account</h3>
 
             <p style={{ margin: "8px 0 0", fontSize: 14, color: "#555" }}>
-              Esta ação é <strong>irreversível</strong>. Tem certeza?
+              This action is <strong>permanent</strong>. Are you sure?
             </p>
 
             <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
@@ -244,7 +244,7 @@ export default function ProfilePage() {
                 onClick={() => setShowDeleteModal(false)}
                 disabled={loadingDelete}
               >
-                Cancelar
+                Cancel
               </button>
 
               <button
@@ -252,7 +252,7 @@ export default function ProfilePage() {
                 onClick={handleDeleteAccount}
                 disabled={loadingDelete}
               >
-                {loadingDelete ? "Excluindo..." : "Excluir"}
+                {loadingDelete ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>
@@ -283,7 +283,7 @@ export default function ProfilePage() {
               maxWidth: 320,
             }}
           >
-            <h3 style={{ marginTop: 0 }}>Editar nome</h3>
+            <h3 style={{ marginTop: 0 }}>Edit Name</h3>
 
             <input
               className={styles.input}
@@ -306,7 +306,7 @@ export default function ProfilePage() {
                   setProfileError("");
                 }}
               >
-                Cancelar
+                Cancel
               </button>
 
               <button
@@ -314,7 +314,7 @@ export default function ProfilePage() {
                 onClick={handleSaveProfile}
                 disabled={savingProfile}
               >
-                {savingProfile ? "Salvando..." : "Salvar"}
+                {savingProfile ? "Saving..." : "Save"}
               </button>
             </div>
           </div>

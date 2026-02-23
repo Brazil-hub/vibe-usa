@@ -19,15 +19,15 @@ export default function VisibilitySelect() {
     <div className={styles.container}>
       {/* HEADER DO PROCESSO */}
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Criar evento</div>
+        <div className={styles.processTitle}>Create Event</div>
         <div className={styles.processStep}>
-          Passo 1 de 5 · Visibilidade
+          Step 1 of 5 · Visibility
         </div>
       </div>
 
       {/* CONTEÚDO */}
       <div className={styles.content}>
-        <h2 className={styles.title}>Quem poderá ver seu evento?</h2>
+        <h2 className={styles.title}>Who can see your event?</h2>
 
         <div className={styles.cards}>
           {/* EVENTO PÚBLICO */}
@@ -38,9 +38,9 @@ export default function VisibilitySelect() {
             <div className={styles.icon}>🌍</div>
 
             <div className={styles.textGroup}>
-              <div className={styles.cardTitle}>Evento público</div>
+              <div className={styles.cardTitle}>Public Event</div>
               <div className={styles.cardDescription}>
-                Qualquer pessoa pode participar do evento.
+                Anyone can join the event.
               </div>
             </div>
           </div>
@@ -53,9 +53,9 @@ export default function VisibilitySelect() {
             <div className={styles.icon}>🔒</div>
 
             <div className={styles.textGroup}>
-              <div className={styles.cardTitle}>Evento privado</div>
+              <div className={styles.cardTitle}>Private Event</div>
               <div className={styles.cardDescription}>
-                Apenas acesso com Link Privado.
+                Access only with a Private Link.
               </div>
             </div>
           </div>

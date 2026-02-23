@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../../supabase/client";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../hooks/useToast";
+import { DRAFT_SESSION_KEY } from "../../constants";
 import ConfirmModal from "../../components/ui/ConfirmModal";
 import "./overview.css";
 
@@ -61,7 +62,7 @@ export default function OverviewPage() {
     }
 
     sessionStorage.setItem(
-  "vg_create_event_draft",
+  DRAFT_SESSION_KEY,
   JSON.stringify({
     ...data,
     is_paid: data.is_paid === true,

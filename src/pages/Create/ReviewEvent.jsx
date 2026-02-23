@@ -6,6 +6,7 @@ import styles from "./ReviewEvent.module.css";
 import { supabase } from "../../supabase/client";
 import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../hooks/useToast";
+import { DRAFT_SESSION_KEY } from "../../constants";
 
 export default function ReviewEvent() {
   const location = useLocation();
@@ -19,7 +20,7 @@ export default function ReviewEvent() {
   let data = null;
 
   try {
-    const raw = sessionStorage.getItem("vg_create_event_draft");
+    const raw = sessionStorage.getItem(DRAFT_SESSION_KEY);
     if (raw) data = JSON.parse(raw);
   } catch {}
 
@@ -85,7 +86,7 @@ export default function ReviewEvent() {
     return;
   }
 
-  sessionStorage.removeItem("vg_create_event_draft");
+  sessionStorage.removeItem(DRAFT_SESSION_KEY);
   showToast(eventId ? "Event updated ✨" : "Event created ✨");
   setTimeout(() => navigate("/"), 800);
 }

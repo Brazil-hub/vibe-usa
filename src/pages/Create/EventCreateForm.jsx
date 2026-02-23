@@ -5,26 +5,14 @@ import Button from "../../components/ui/Button";
 import { supabase } from "../../supabase/client";
 import { useAuth } from "../../auth/useAuth";
 import styles from "./EventCreateForm.module.css";
+import { useToast } from "../../hooks/useToast";
+import { DRAFT_SESSION_KEY } from "../../constants";
 
 /* 🔽 ADIÇÃO (PRO, sem bug) */
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 /* 🔼 ADIÇÃO */
-
-function toast(msg) {
-  const div = document.createElement("div");
-  div.className = styles.toast;
-  div.innerText = msg;
-
-  document.body.appendChild(div);
-
-  setTimeout(() => div.classList.add(styles.toastShow), 10);
-  setTimeout(() => {
-    div.classList.remove(styles.toastShow);
-    setTimeout(() => div.remove(), 250);
-  }, 2300);
-}
 
 function toDatetimeLocal(value) {
   if (!value) return "";
@@ -70,6 +58,7 @@ export default function EventCreateForm() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
   const isPaid = state?.is_paid ?? false;
+  const { showToast, ToastComponent } = useToast();
 
 
   useEffect(() => {
@@ -77,7 +66,7 @@ export default function EventCreateForm() {
 
   if (!source) {
     try {
-      const raw = sessionStorage.getItem("vg_create_event_draft");
+      const raw = sessionStorage.getItem(DRAFT_SESSION_KEY);
       if (raw) source = JSON.parse(raw);
     } catch {}
   }
@@ -198,7 +187,7 @@ useEffect(() => {
     if (!file && previewUrl) return previewUrl;
     if (!file) return null;
     if (!user?.id) {
-      toast("Session is still loading. Try again.");
+      showToast("Session is still loading. Try again.");
       return null;
     }
     const fileName = `${user.id}-${Date.now()}-${file.name}`;
@@ -206,7 +195,7 @@ useEffect(() => {
       .from("event-images")
       .upload(fileName, file);
     if (error) {
-      toast("Error uploading image.");
+      showToast("Error uploading image.");
       return null;
     }
     const { data: urlData } = supabase.storage
@@ -217,7 +206,7 @@ useEffect(() => {
 
   const storedDraft = (() => {
   try {
-    const raw = sessionStorage.getItem("vg_create_event_draft");
+    const raw = sessionStorage.getItem(DRAFT_SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
@@ -242,26 +231,26 @@ const resolvedIsPublic =
 
   async function goToReview() {
     if (isSaving) return;
-    if (authLoading) return toast("Loading session... try again.");
+    if (authLoading) return showToast("Loading session... try again.");
     if (!user?.id) {
-      toast("You need to be logged in to create an event.");
+      showToast("You need to be logged in to create an event.");
       navigate("/login", { replace: true });
       return;
     }
-    if (!title) return toast("Title is required.");
-    if (!eventDate) return toast("Date is required.");
+    if (!title) return showToast("Title is required.");
+    if (!eventDate) return showToast("Date is required.");
     if (state?.event_format === "in_person" && !locationField)
-      return toast("Address is required.");
+      return showToast("Address is required.");
     if (state?.event_format === "online" && !onlineUrl)
-      return toast("Link is required.");
+      return showToast("Link is required.");
     if (state?.is_paid && (!price || Number(price) <= 0))
-      return toast("Invalid price.");
+      return showToast("Invalid price.");
 
     setIsSaving(true);
     const finalImageUrl = await uploadImage();
     if (!finalImageUrl) {
       setIsSaving(false);
-      return toast("Please choose a valid image.");
+      return showToast("Please choose a valid image.");
     }
 
     const draft = {
@@ -278,7 +267,7 @@ const resolvedIsPublic =
       event_format: resolvedEventFormat,
       image_url: finalImageUrl,
     };
-    sessionStorage.setItem("vg_create_event_draft", JSON.stringify(draft));
+    sessionStorage.setItem(DRAFT_SESSION_KEY, JSON.stringify(draft));
 
     navigate("/create/review", {
       state: { ...draft, fromReview: true },
@@ -363,7 +352,7 @@ const resolvedIsPublic =
         </div>
       )}
 
-      {(state?.is_paid ?? JSON.parse(sessionStorage.getItem("vg_create_event_draft"))?.is_paid) && (
+      {(state?.is_paid ?? JSON.parse(sessionStorage.getItem(DRAFT_SESSION_KEY))?.is_paid) && (
 
         <div className={styles.card}>
           <input
@@ -395,6 +384,8 @@ const resolvedIsPublic =
       <Button onClick={goToReview} disabled={isSaving}>
         {isSaving ? "Processing..." : "Review Event"}
       </Button>
+
+      {ToastComponent}
     </div>
   );
 }

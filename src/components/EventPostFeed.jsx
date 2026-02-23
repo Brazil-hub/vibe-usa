@@ -10,29 +10,6 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
   const [eventMeta, setEventMeta] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
 
-  // carregar usuário + evento (para saber se é público, privado, organizador etc.)
-  useEffect(() => {
-    async function loadMeta() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      setCurrentUser(user || null);
-
-      const { data: event, error: eventError } = await supabase
-        .from("events")
-        .select("id, creator_id, is_private")
-        .eq("id", eventId)
-        .single();
-
-      if (!eventError) {
-        setEventMeta(event);
-      }
-    }
-
-    loadMeta();
-  }, [eventId]);
-
   async function loadPosts() {
     setLoading(true);
 

@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import AppLayout from "../layout/AppLayout";
 import RequireAuth from "../auth/RequireAuth";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 import Login from "../pages/Login";
 import HomePage from "../pages/HomePage";
@@ -22,6 +23,7 @@ import AdminReviewPage from "../pages/Admin/AdminReviewPage";
 
 export default function AppRouter() {
   return (
+    <ErrorBoundary>
     <Routes>
       <Route element={<AppLayout />}>
         {/* PUBLICAS */}
@@ -59,5 +61,6 @@ export default function AppRouter() {
         {/* FALLBACK */}
       </Route>
     </Routes>
+    </ErrorBoundary>
   );
 }

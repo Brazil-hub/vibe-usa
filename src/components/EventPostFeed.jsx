@@ -180,9 +180,7 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       setCanComment(
         isOrganizer ||
           status === "going" ||
-          status === "maybe" ||
-          status === "confirmado" || // caso você use outro nome
-          status === "talvez"
+          status === "maybe"
       );
     }
 

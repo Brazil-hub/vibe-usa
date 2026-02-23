@@ -41,6 +41,7 @@ export default function EventDetailsPage() {
 
   const [rsvpStatus, setRsvpStatus] = useState(null);
   const [rsvpLoading, setRsvpLoading] = useState(false);
+  const [acceptedInvite, setAcceptedInvite] = useState(false);
 
   const [attendance, setAttendance] = useState({
   going: [],

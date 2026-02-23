@@ -289,7 +289,7 @@ export default function ProfilePage() {
               className={styles.input}
               value={nameDraft}
               onChange={(e) => setNameDraft(e.target.value)}
-              placeholder="Seu nome"
+              placeholder="Your name"
               autoFocus
             />
 

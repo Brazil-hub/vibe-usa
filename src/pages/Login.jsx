@@ -54,7 +54,7 @@ export default function Login() {
     }
 
     return {
-      title: "Erro",
+      title: "Error",
       message:
         context === "signup"
           ? "Couldn't create account. Please try again."
@@ -117,7 +117,7 @@ export default function Login() {
       });
     } catch (err) {
       openModal(
-        "Erro",
+        "Error",
         "Couldn't sign in with Google. Please try again."
       );
       setLoading(false);

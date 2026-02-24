@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { supabase } from "../supabase/client";
+import { useAuth } from "../auth/useAuth";
 import { useNavigate } from "react-router-dom";
 import styles from "./Login.module.css";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { devLogin } = useAuth();
 
   const [mode, setMode] = useState("login"); // login | signup
   const [email, setEmail] = useState("");
@@ -104,6 +106,11 @@ export default function Login() {
     }
   }
 
+  function handleDevLogin() {
+    devLogin();
+    navigate("/feed");
+  }
+
   async function handleGoogleLogin() {
     if (loading) return;
     setLoading(true);
@@ -195,6 +202,16 @@ export default function Login() {
           </>
         )}
       </p>
+
+      {import.meta.env.DEV && (
+        <button
+          type="button"
+          className={styles.devButton}
+          onClick={handleDevLogin}
+        >
+          🛠 Dev Login (local only)
+        </button>
+      )}
 
       {/* MODAL GENÉRICO (erro / sucesso) */}
       {showModal && (

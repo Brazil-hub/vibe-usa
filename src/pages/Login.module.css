@@ -71,3 +71,16 @@
   font-weight: 600;
   cursor: pointer;
 }
+
+.devButton {
+  margin-top: 24px;
+  padding: 10px;
+  border-radius: 10px;
+  border: 2px dashed #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}

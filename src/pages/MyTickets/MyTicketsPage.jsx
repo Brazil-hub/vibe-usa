@@ -33,8 +33,8 @@ export default function MyTicketsPage() {
     );
   }
 
-  const active = tickets.filter((t) => t.status === "active");
-  const used = tickets.filter((t) => t.status === "used");
+  const active    = tickets.filter((t) => t.status === "active");
+  const used      = tickets.filter((t) => t.status === "used");
   const cancelled = tickets.filter((t) => t.status === "cancelled");
 
   return (
@@ -43,26 +43,25 @@ export default function MyTicketsPage() {
         <button className={styles.back} onClick={() => navigate(-1)}>
           ←
         </button>
-        <h1 className={styles.headerTitle}>Meus Ingressos</h1>
+        <h1 className={styles.headerTitle}>My Tickets</h1>
       </header>
 
       {tickets.length === 0 ? (
         <div className={styles.empty}>
           <span className={styles.emptyIcon}>🎟️</span>
-          <p className={styles.emptyTitle}>Nenhum ingresso ainda</p>
+          <p className={styles.emptyTitle}>No tickets yet</p>
           <p className={styles.emptyText}>
-            Seus ingressos vão aparecer aqui depois que você comprar ou receber
-            um.
+            Your tickets will appear here after you purchase or receive one.
           </p>
           <button className={styles.btnPrimary} onClick={() => navigate("/")}>
-            Ver eventos
+            Browse events
           </button>
         </div>
       ) : (
         <div className={styles.content}>
           {active.length > 0 && (
             <section>
-              <p className={styles.sectionLabel}>Ativos</p>
+              <p className={styles.sectionLabel}>Active</p>
               <div className={styles.list}>
                 {active.map((t) => (
                   <TicketCard
@@ -77,7 +76,7 @@ export default function MyTicketsPage() {
 
           {used.length > 0 && (
             <section>
-              <p className={styles.sectionLabel}>Utilizados</p>
+              <p className={styles.sectionLabel}>Used</p>
               <div className={styles.list}>
                 {used.map((t) => (
                   <TicketCard
@@ -93,7 +92,7 @@ export default function MyTicketsPage() {
 
           {cancelled.length > 0 && (
             <section>
-              <p className={styles.sectionLabel}>Cancelados</p>
+              <p className={styles.sectionLabel}>Cancelled</p>
               <div className={styles.list}>
                 {cancelled.map((t) => (
                   <TicketCard
@@ -118,17 +117,17 @@ function TicketCard({ ticket, onClick, dimmed }) {
   const event = ticket.events;
   const date = event?.event_date ? new Date(event.event_date) : null;
   const dateLabel = date
-    ? date.toLocaleDateString("pt-BR", {
+    ? date.toLocaleDateString("en-US", {
         day: "2-digit",
         month: "short",
         year: "numeric",
       })
-    : "Data a confirmar";
+    : "Date TBD";
 
   const statusMap = {
-    active: { label: "Ativo", color: "#22c55e" },
-    used: { label: "Utilizado", color: "#6b7280" },
-    cancelled: { label: "Cancelado", color: "#ef4444" },
+    active:    { label: "Active",    color: "#22c55e" },
+    used:      { label: "Used",      color: "#6b7280" },
+    cancelled: { label: "Cancelled", color: "#ef4444" },
   };
   const status = statusMap[ticket.status] || statusMap.active;
 
@@ -145,9 +144,9 @@ function TicketCard({ ticket, onClick, dimmed }) {
       )}
 
       <div className={styles.ticketInfo}>
-        <p className={styles.ticketEventTitle}>{event?.title || "Evento"}</p>
+        <p className={styles.ticketEventTitle}>{event?.title || "Event"}</p>
         <p className={styles.ticketDate}>📅 {dateLabel}</p>
-        <p className={styles.ticketCode}>{ticket.qr_code}</p>
+        <p className={styles.ticketCode}>{ticket.code}</p>
       </div>
 
       <div className={styles.ticketRight}>

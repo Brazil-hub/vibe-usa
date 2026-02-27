@@ -214,7 +214,7 @@ export default function ReviewEvent() {
         <span className={styles.metaBadge}>{formatLabel}</span>
         {state.is_paid && state.price ? (
           <span className={styles.metaBadgePink}>
-            R$ {Number(state.price).toFixed(2)}
+            ${Number(state.price).toFixed(2)}
           </span>
         ) : (
           <span className={styles.metaBadge}>Free</span>

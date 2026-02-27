@@ -34,12 +34,12 @@ export default function TicketView() {
   }, [ticketId, user, navigate]);
 
   function handleShare() {
-    const text = `🎟️ Meu ingresso para ${ticket?.events?.title}\nCódigo: ${ticket?.qr_code}`;
+    const text = `🎟️ My ticket for ${ticket?.events?.title}\nCode: ${ticket?.code}`;
     if (navigator.share) {
       navigator.share({ text, url: window.location.href });
     } else {
       navigator.clipboard.writeText(text);
-      showToast("Ingresso copiado 📎");
+      showToast("Ticket copied 📎");
     }
   }
 
@@ -54,8 +54,8 @@ export default function TicketView() {
   if (!ticket) {
     return (
       <div className={styles.notFound}>
-        <p>Ingresso não encontrado.</p>
-        <button onClick={() => navigate("/my-tickets")}>Ver meus ingressos</button>
+        <p>Ticket not found.</p>
+        <button onClick={() => navigate("/my-tickets")}>View my tickets</button>
       </div>
     );
   }
@@ -63,34 +63,34 @@ export default function TicketView() {
   const event = ticket.events;
   const date = event?.event_date ? new Date(event.event_date) : null;
   const dateLabel = date
-    ? date.toLocaleDateString("pt-BR", {
+    ? date.toLocaleDateString("en-US", {
         weekday: "long",
         day: "2-digit",
         month: "long",
         year: "numeric",
       })
-    : "Data a confirmar";
+    : "Date TBD";
   const timeLabel = date
-    ? date.toLocaleTimeString("pt-BR", {
+    ? date.toLocaleTimeString("en-US", {
         hour: "2-digit",
         minute: "2-digit",
       })
     : "";
 
   const statusMap = {
-    active: { label: "✅ Válido", bg: "rgba(34,197,94,0.12)", color: "#22c55e" },
-    used: { label: "☑️ Utilizado", bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
-    cancelled: { label: "❌ Cancelado", bg: "rgba(239,68,68,0.12)", color: "#ef4444" },
+    active:    { label: "✅ Valid",     bg: "rgba(34,197,94,0.12)",   color: "#22c55e" },
+    used:      { label: "☑️ Used",      bg: "rgba(107,114,128,0.12)", color: "#6b7280" },
+    cancelled: { label: "❌ Cancelled", bg: "rgba(239,68,68,0.12)",   color: "#ef4444" },
   };
   const statusInfo = statusMap[ticket.status] || statusMap.active;
 
-  const qrData = encodeURIComponent(ticket.qr_code);
+  const qrData = encodeURIComponent(ticket.code);
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${qrData}&color=ff1493&bgcolor=0a0a0a&qzone=1`;
 
   const priceLabel =
     event?.is_paid && event?.price
-      ? `R$ ${Number(event.price).toFixed(2)}`
-      : "Gratuito";
+      ? `$${Number(event.price).toFixed(2)}`
+      : "Free";
 
   return (
     <div className={styles.page}>
@@ -99,9 +99,9 @@ export default function TicketView() {
         <button className={styles.back} onClick={() => navigate("/my-tickets")}>
           ←
         </button>
-        <h1 className={styles.headerTitle}>Ingresso</h1>
+        <h1 className={styles.headerTitle}>Ticket</h1>
         <button className={styles.shareBtn} onClick={handleShare}>
-          Compartilhar
+          Share
         </button>
       </header>
 
@@ -122,13 +122,13 @@ export default function TicketView() {
               {statusInfo.label}
             </div>
 
-            <h2 className={styles.eventTitle}>{event?.title || "Evento"}</h2>
+            <h2 className={styles.eventTitle}>{event?.title || "Event"}</h2>
 
             <div className={styles.metaGrid}>
               <div className={styles.metaItem}>
                 <span className={styles.metaIcon}>📅</span>
                 <div>
-                  <p className={styles.metaLabel}>Data</p>
+                  <p className={styles.metaLabel}>Date</p>
                   <p className={styles.metaValue}>{dateLabel}</p>
                 </div>
               </div>
@@ -137,7 +137,7 @@ export default function TicketView() {
                 <div className={styles.metaItem}>
                   <span className={styles.metaIcon}>🕐</span>
                   <div>
-                    <p className={styles.metaLabel}>Horário</p>
+                    <p className={styles.metaLabel}>Time</p>
                     <p className={styles.metaValue}>{timeLabel}</p>
                   </div>
                 </div>
@@ -147,7 +147,7 @@ export default function TicketView() {
                 <div className={styles.metaItem}>
                   <span className={styles.metaIcon}>📍</span>
                   <div>
-                    <p className={styles.metaLabel}>Local</p>
+                    <p className={styles.metaLabel}>Venue</p>
                     <p className={styles.metaValue}>{event.location}</p>
                   </div>
                 </div>
@@ -166,22 +166,22 @@ export default function TicketView() {
               <div className={styles.metaItem}>
                 <span className={styles.metaIcon}>👤</span>
                 <div>
-                  <p className={styles.metaLabel}>Participante</p>
-                  <p className={styles.metaValue}>{ticket.name || "–"}</p>
+                  <p className={styles.metaLabel}>Attendee</p>
+                  <p className={styles.metaValue}>{ticket.attendee_name || "–"}</p>
                 </div>
               </div>
 
               <div className={styles.metaItem}>
                 <span className={styles.metaIcon}>💰</span>
                 <div>
-                  <p className={styles.metaLabel}>Valor</p>
+                  <p className={styles.metaLabel}>Amount</p>
                   <p className={styles.metaValue}>{priceLabel}</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* SEPARADOR PERFURADO */}
+          {/* PERFORATED SEPARATOR */}
           <div className={styles.perforation}>
             <div className={styles.perforationHoleLeft} />
             <div className={styles.perforationLine} />
@@ -190,21 +190,21 @@ export default function TicketView() {
 
           {/* BOTTOM — QR CODE */}
           <div className={styles.ticketBottom}>
-            <p className={styles.scanLabel}>Apresente na entrada</p>
+            <p className={styles.scanLabel}>Show at entrance</p>
 
             <div className={styles.qrWrapper}>
               <img
                 src={qrUrl}
-                alt={`QR Code - ${ticket.qr_code}`}
+                alt={`QR Code - ${ticket.code}`}
                 className={styles.qr}
                 loading="lazy"
               />
             </div>
 
-            <p className={styles.ticketCode}>{ticket.qr_code}</p>
+            <p className={styles.ticketCode}>{ticket.code}</p>
 
-            {ticket.payment_provider === "generated" && (
-              <span className={styles.generatedBadge}>🎁 Ingresso gerado</span>
+            {ticket.is_generated && (
+              <span className={styles.generatedBadge}>🎁 Generated ticket</span>
             )}
 
             <p className={styles.ticketId}>ID: {ticket.id.slice(0, 8).toUpperCase()}</p>
@@ -212,13 +212,13 @@ export default function TicketView() {
         </div>
       </div>
 
-      {/* AÇÕES */}
+      {/* ACTIONS */}
       <div className={styles.actions}>
         <button
           className={styles.btnOutline}
           onClick={() => navigate(`/event/${event?.id}`)}
         >
-          Ver evento
+          View event
         </button>
       </div>
 

@@ -4,9 +4,9 @@ import { supabase } from "./client";
 // UTILS
 // ─────────────────────────────────────────────
 
-/** Gera um código único de ingresso ex: VB-ABCD1-XYZ23 */
+/** Generates a unique ticket code e.g. VB-ABCD1-XYZ23 */
 function generateTicketCode() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sem chars ambíguos
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no ambiguous chars
   let part1 = "";
   let part2 = "";
   for (let i = 0; i < 5; i++) {
@@ -17,17 +17,18 @@ function generateTicketCode() {
 }
 
 // ─────────────────────────────────────────────
-// COMPRAR INGRESSO (evento pago)
+// BUY TICKET (paid or free event)
 // ─────────────────────────────────────────────
 
 /**
- * Cria um ingresso para evento pago
+ * Creates a ticket (and a matching order row) for the authenticated user.
  * @param {Object} params
  * @param {string} params.eventId
  * @param {number} params.price
  * @param {string} params.attendeeName
  * @param {string} params.attendeeEmail
  * @param {string} [params.paymentMethod]
+ * @returns {{ data: { ticket, order } | null, error }}
  */
 export async function purchaseTicket({
   eventId,
@@ -42,36 +43,57 @@ export async function purchaseTicket({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { error: authError || new Error("Não autenticado") };
+    return { error: authError || new Error("Not authenticated") };
   }
 
-  const qr_code = generateTicketCode();
+  const code = generateTicketCode();
 
-  const { data: ticket, error } = await supabase
+  // 1. Insert ticket
+  const { data: ticket, error: ticketError } = await supabase
     .from("tickets")
     .insert({
-      event_id: eventId,
-      user_id: user.id,
-      qr_code,
-      name: attendeeName,
-      price: price || 0,
-      quantity: 1,
-      status: "active",
-      payment_provider: paymentMethod,
-      paid_at: new Date().toISOString(),
+      event_id:       eventId,
+      user_id:        user.id,
+      code,
+      attendee_name:  attendeeName,
+      attendee_email: attendeeEmail,
+      ticket_type:    "standard",
+      status:         "active",
     })
     .select()
     .single();
 
-  return { data: ticket, error };
+  if (ticketError) return { error: ticketError };
+
+  // 2. Insert order (non-blocking — ticket already created)
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert({
+      event_id:       eventId,
+      buyer_id:       user.id,
+      ticket_id:      ticket.id,
+      quantity:       1,
+      unit_price:     price || 0,
+      total_amount:   price || 0,
+      status:         "completed",
+      payment_method: paymentMethod,
+    })
+    .select()
+    .single();
+
+  if (orderError) {
+    console.warn("Order insert failed (non-blocking):", orderError);
+  }
+
+  return { data: { ticket, order: order || null }, error: null };
 }
 
 // ─────────────────────────────────────────────
-// GERAR INGRESSO (evento privado — organizador)
+// GENERATE TICKET (organizer → private event guest)
 // ─────────────────────────────────────────────
 
 /**
- * Organizer gera um ingresso gratuito para um convidado
+ * Organizer generates a free ticket for a guest.
  */
 export async function generateTicket({
   eventId,
@@ -84,41 +106,41 @@ export async function generateTicket({
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return { error: authError || new Error("Não autenticado") };
+    return { error: authError || new Error("Not authenticated") };
   }
 
-  // Verifica se o usuário é criador do evento
+  // Verify the user is the event creator
   const { data: event, error: eventError } = await supabase
     .from("events")
     .select("creator_id")
     .eq("id", eventId)
     .single();
 
-  if (eventError || !event) return { error: new Error("Evento não encontrado") };
-  if (event.creator_id !== user.id) return { error: new Error("Sem permissão") };
+  if (eventError || !event) return { error: new Error("Event not found") };
+  if (event.creator_id !== user.id) return { error: new Error("Not authorized") };
 
-  const qr_code = generateTicketCode();
+  const code = generateTicketCode();
 
   const { data: ticket, error } = await supabase
     .from("tickets")
     .insert({
-      event_id: eventId,
-      user_id: null,
-      qr_code,
-      name: attendeeName,
-      price: 0,
-      quantity: 1,
-      status: "active",
-      payment_provider: "generated",
+      event_id:       eventId,
+      user_id:        null,
+      code,
+      attendee_name:  attendeeName,
+      attendee_email: attendeeEmail,
+      ticket_type:    "standard",
+      status:         "active",
+      is_generated:   true,
     })
     .select()
     .single();
 
-  return { data: ticket, error };
+  return { data: ticket ? { ticket } : null, error };
 }
 
 // ─────────────────────────────────────────────
-// LISTAR INGRESSOS DO USUÁRIO
+// LIST USER'S TICKETS
 // ─────────────────────────────────────────────
 
 export async function getMyTickets() {
@@ -155,7 +177,7 @@ export async function getMyTickets() {
 }
 
 // ─────────────────────────────────────────────
-// BUSCAR INGRESSO POR ID
+// GET TICKET BY ID
 // ─────────────────────────────────────────────
 
 export async function getTicketById(ticketId) {
@@ -186,7 +208,7 @@ export async function getTicketById(ticketId) {
 }
 
 // ─────────────────────────────────────────────
-// LISTAR INGRESSOS DO EVENTO (para organizador)
+// LIST EVENT TICKETS (organizer)
 // ─────────────────────────────────────────────
 
 export async function getEventTickets(eventId) {
@@ -200,15 +222,15 @@ export async function getEventTickets(eventId) {
 }
 
 // ─────────────────────────────────────────────
-// CHECK-IN (organizador valida ingresso)
+// CHECK-IN (organizer validates ticket)
 // ─────────────────────────────────────────────
 
 export async function checkInTicket(ticketId) {
   const { data, error } = await supabase
     .from("tickets")
     .update({
-      status: "used",
-      used_at: new Date().toISOString(),
+      status:        "used",
+      checked_in_at: new Date().toISOString(),
     })
     .eq("id", ticketId)
     .select()
@@ -218,7 +240,7 @@ export async function checkInTicket(ticketId) {
 }
 
 // ─────────────────────────────────────────────
-// CANCELAR INGRESSO
+// CANCEL TICKET
 // ─────────────────────────────────────────────
 
 export async function cancelTicket(ticketId) {
@@ -233,7 +255,7 @@ export async function cancelTicket(ticketId) {
 }
 
 // ─────────────────────────────────────────────
-// VERIFICAR SE USUÁRIO JÁ TEM INGRESSO
+// CHECK IF USER ALREADY HAS A TICKET
 // ─────────────────────────────────────────────
 
 export async function getUserTicketForEvent(eventId) {
@@ -255,7 +277,7 @@ export async function getUserTicketForEvent(eventId) {
 }
 
 // ─────────────────────────────────────────────
-// CONTAR INGRESSOS DO EVENTO (para dashboard)
+// COUNT EVENT TICKETS (for dashboard)
 // ─────────────────────────────────────────────
 
 export async function countEventTickets(eventId) {

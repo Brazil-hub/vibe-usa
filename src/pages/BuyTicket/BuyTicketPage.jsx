@@ -19,7 +19,6 @@ export default function BuyTicketPage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState("form"); // "form" | "confirm" | "success"
 
   useEffect(() => {
     if (!user) {
@@ -37,7 +36,7 @@ export default function BuyTicketPage() {
       setEvent(ev);
       setExistingTicket(ticket);
 
-      // Pré-preenche com dados do perfil
+      // Pre-fill with profile data
       setName(user.user_metadata?.full_name || "");
       setEmail(user.email || "");
       setLoading(false);
@@ -48,7 +47,7 @@ export default function BuyTicketPage() {
 
   async function handlePurchase() {
     if (!name.trim() || !email.trim()) {
-      showToast("Preencha seu nome e e-mail 👀");
+      showToast("Please fill in your name and email 👀");
       return;
     }
 
@@ -66,7 +65,7 @@ export default function BuyTicketPage() {
 
     if (error) {
       console.error(error);
-      showToast("Erro ao processar ingresso. Tente novamente.", "error");
+      showToast("Error processing ticket. Please try again.", "error");
       return;
     }
 
@@ -84,7 +83,7 @@ export default function BuyTicketPage() {
   if (!event) {
     return (
       <div className={styles.notFound}>
-        <p>Evento não encontrado.</p>
+        <p>Event not found.</p>
       </div>
     );
   }
@@ -94,21 +93,21 @@ export default function BuyTicketPage() {
       <div className={styles.page}>
         <div className={styles.card}>
           <div className={styles.alreadyIcon}>🎟️</div>
-          <h2 className={styles.alreadyTitle}>Você já tem um ingresso!</h2>
+          <h2 className={styles.alreadyTitle}>You already have a ticket!</h2>
           <p className={styles.alreadyText}>
-            Você já comprou ingresso para <strong>{event.title}</strong>.
+            You already purchased a ticket for <strong>{event.title}</strong>.
           </p>
           <button
             className={styles.btnPrimary}
             onClick={() => navigate(`/my-tickets/${existingTicket.id}`)}
           >
-            Ver meu ingresso
+            View my ticket
           </button>
           <button
             className={styles.btnGhost}
             onClick={() => navigate(`/event/${eventId}`)}
           >
-            Voltar ao evento
+            Back to event
           </button>
         </div>
         {ToastComponent}
@@ -118,28 +117,28 @@ export default function BuyTicketPage() {
 
   const priceLabel =
     event.price > 0
-      ? `R$ ${Number(event.price).toFixed(2)}`
-      : "Gratuito";
+      ? `$${Number(event.price).toFixed(2)}`
+      : "Free";
 
   const date = event.event_date ? new Date(event.event_date) : null;
   const dateLabel = date
-    ? date.toLocaleDateString("pt-BR", {
+    ? date.toLocaleDateString("en-US", {
         weekday: "short",
         day: "2-digit",
         month: "short",
         hour: "2-digit",
         minute: "2-digit",
       })
-    : "Data a confirmar";
+    : "Date TBD";
 
   return (
     <div className={styles.page}>
       {/* HEADER */}
       <header className={styles.header}>
         <button className={styles.back} onClick={() => navigate(`/event/${eventId}`)}>
-          ← Voltar
+          ← Back
         </button>
-        <h1 className={styles.headerTitle}>Comprar Ingresso</h1>
+        <h1 className={styles.headerTitle}>Buy Ticket</h1>
       </header>
 
       {/* EVENT INFO */}
@@ -159,35 +158,35 @@ export default function BuyTicketPage() {
 
       {/* FORM */}
       <div className={styles.formCard}>
-        <h2 className={styles.formTitle}>Dados do participante</h2>
+        <h2 className={styles.formTitle}>Attendee info</h2>
 
         <div className={styles.field}>
-          <label className={styles.label}>Nome completo</label>
+          <label className={styles.label}>Full name</label>
           <input
             className={styles.input}
             type="text"
-            placeholder="Seu nome"
+            placeholder="Your name"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
 
         <div className={styles.field}>
-          <label className={styles.label}>E-mail</label>
+          <label className={styles.label}>Email</label>
           <input
             className={styles.input}
             type="email"
-            placeholder="seu@email.com"
+            placeholder="you@email.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
         </div>
       </div>
 
-      {/* RESUMO */}
+      {/* SUMMARY */}
       <div className={styles.summaryCard}>
         <div className={styles.summaryRow}>
-          <span>Ingresso × 1</span>
+          <span>Ticket × 1</span>
           <span>{priceLabel}</span>
         </div>
         <div className={styles.summaryDivider} />
@@ -198,7 +197,7 @@ export default function BuyTicketPage() {
 
         {event.price > 0 && (
           <p className={styles.paymentNote}>
-            💳 Pagamento simulado (integração com gateway em breve)
+            💳 Simulated payment (gateway integration coming soon)
           </p>
         )}
       </div>
@@ -211,17 +210,17 @@ export default function BuyTicketPage() {
           disabled={submitting}
         >
           {submitting
-            ? "Processando…"
+            ? "Processing…"
             : event.price > 0
-            ? `Pagar ${priceLabel}`
-            : "Garantir ingresso gratuito"}
+            ? `Pay ${priceLabel}`
+            : "Get free ticket"}
         </button>
 
         <button
           className={styles.btnGhost}
           onClick={() => navigate(`/event/${eventId}`)}
         >
-          Cancelar
+          Cancel
         </button>
       </div>
 

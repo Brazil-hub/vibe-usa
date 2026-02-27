@@ -47,7 +47,7 @@ async function compressForComment(file) {
     canvas.toBlob(resolve, "image/jpeg", QUALITY)
   );
 
-  if (!blob) throw new Error("Falha ao compactar imagem");
+  if (!blob) throw new Error("Failed to compress image");
 
   const safeName = (file.name || "comment")
     .replace(/\.(png|jpg|jpeg|webp|heic|heif)$/i, "")
@@ -69,15 +69,15 @@ export default function EventPostAddComment({ postId, onComment }) {
       const compressed = await compressForComment(file);
 
       console.log(
-        "Imagem original (KB):",
+        "Original image (KB):",
         Math.round(file.size / 1024),
-        "→ compactada (KB):",
+        "→ compressed (KB):",
         Math.round(compressed.size / 1024)
       );
 
       setImageFile(compressed);
     } catch (err) {
-      console.error("Erro ao compactar imagem:", err);
+      console.error("Error compressing image:", err);
       setImageFile(file); // fallback
     }
   }
@@ -107,7 +107,7 @@ export default function EventPostAddComment({ postId, onComment }) {
         });
 
       if (uploadError) {
-        console.error("Erro ao subir imagem:", uploadError);
+        console.error("Error uploading image:", uploadError);
       } else {
         const { data } = supabase.storage
           .from("comment-images")
@@ -126,7 +126,7 @@ export default function EventPostAddComment({ postId, onComment }) {
     });
 
     if (error) {
-      console.error("Erro ao comentar:", error);
+      console.error("Error posting comment:", error);
     } else {
       setText("");
       setImageFile(null);
@@ -141,7 +141,7 @@ export default function EventPostAddComment({ postId, onComment }) {
       <input
         className={styles.commentInput}
         type="text"
-        placeholder="Escreva um comentário…"
+        placeholder="Write a comment…"
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={sending}
@@ -160,7 +160,7 @@ export default function EventPostAddComment({ postId, onComment }) {
         onClick={submit}
         disabled={sending || (!text.trim() && !imageFile)}
       >
-        Enviar
+        Send
       </button>
     </div>
   );

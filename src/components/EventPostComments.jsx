@@ -23,7 +23,6 @@ export default function EventPostComments({
         id,
         text,
         image_url,
-        sticker,
         created_at,
         status,
         user_id,
@@ -44,7 +43,7 @@ export default function EventPostComments({
     const { data, error } = await query;
 
     if (error) {
-      console.error("Erro carregando comentários:", error);
+      console.error("Error loading comments:", error);
       setComments([]);
     } else {
       setComments(data || []);
@@ -89,7 +88,7 @@ export default function EventPostComments({
         className={styles.commentsToggle}
         onClick={() => setOpen((prev) => !prev)}
       >
-        {open ? "Ocultar comentários" : "Ver comentários"}
+        {open ? "Hide comments" : "Comments"}
       </button>
 
       {open && (
@@ -102,13 +101,11 @@ export default function EventPostComments({
           )}
 
           {loading && (
-            <p className={styles.placeholderText}>Carregando comentários…</p>
+            <p className={styles.placeholderText}>Loading comments…</p>
           )}
 
           {!loading && comments.length === 0 && (
-            <p className={styles.placeholderText}>
-              Ainda não há comentários.
-            </p>
+            <p className={styles.placeholderText}>No comments yet.</p>
           )}
 
           {!loading &&
@@ -135,11 +132,11 @@ export default function EventPostComments({
                   <div className={styles.commentBody}>
                     <div className={styles.commentHeader}>
                       <span className={styles.commentName}>
-                        {user.name || "Usuário"}
+                        {user.name || "User"}
                       </span>
                       <span className={styles.commentDate}>
                         {new Date(comment.created_at).toLocaleString(
-                          "pt-BR",
+                          "en-US",
                           {
                             day: "2-digit",
                             month: "short",
@@ -169,14 +166,14 @@ export default function EventPostComments({
                             onClick={() => handleApprove(comment.id)}
                             className={styles.commentApprove}
                           >
-                            Aprovar
+                            Approve
                           </button>
                         )}
                         <button
                           onClick={() => handleDelete(comment.id)}
                           className={styles.commentDelete}
                         >
-                          Deletar
+                          Delete
                         </button>
                       </div>
                     )}

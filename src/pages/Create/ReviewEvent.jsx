@@ -64,13 +64,16 @@ export default function ReviewEvent() {
         try {
           const file = draftFileStore.get();
           if (file && user?.id) {
-            const fileName = `${user.id}-${Date.now()}-${file.name}`;
+            // Always use a clean filename — avoids spaces/special chars that
+            // break Supabase Storage URLs. resizeAndCompressImage outputs JPEG.
+            const fileName = `${user.id}-${Date.now()}.jpg`;
             const { error: uploadError, data: uploadData } = await supabase.storage
               .from("event-images")
-              .upload(fileName, file);
+              .upload(fileName, file, { contentType: "image/jpeg" });
 
             if (uploadError) {
-              console.warn("Cover upload error (non-blocking):", uploadError);
+              console.warn("Cover upload error:", uploadError);
+              showToast(`Image upload failed: ${uploadError.message}`);
               imageUrl = "";
             } else {
               console.log("Cover uploaded:", uploadData);
@@ -81,11 +84,14 @@ export default function ReviewEvent() {
               draftFileStore.clear();
             }
           } else {
-            imageUrl = ""; // file lost (HMR / page refresh) — skip
+            // File was lost (page refresh between steps) — publish without image
+            console.warn("draftFileStore empty — publishing without image");
+            showToast("Image was lost (page was refreshed) — publishing without cover photo");
+            imageUrl = "";
           }
         } catch (uploadEx) {
-          // supabase-js storage re-throws network errors — catch and skip
-          console.warn("Cover upload threw (non-blocking):", uploadEx);
+          console.warn("Cover upload threw:", uploadEx);
+          showToast(`Image upload error: ${uploadEx?.message || "unknown error"}`);
           imageUrl = "";
         }
       }

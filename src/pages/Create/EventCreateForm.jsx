@@ -1,16 +1,14 @@
 // src/pages/Create/EventCreateForm.jsx
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "../../components/ui/Button";
-import { supabase } from "../../supabase/client";
 import { useAuth } from "../../auth/useAuth";
 import styles from "./EventCreateForm.module.css";
+import { draftFileStore } from "./draftFileStore";
 
-/* 🔽 ADIÇÃO (PRO, sem bug) */
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-/* 🔼 ADIÇÃO */
 
 function toast(msg) {
   const div = document.createElement("div");
@@ -68,8 +66,6 @@ export default function EventCreateForm() {
 
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const isPaid = state?.is_paid ?? false;
 
 
   useEffect(() => {
@@ -114,27 +110,25 @@ export default function EventCreateForm() {
 
 
 
-  /* 🔽 ADIÇÃO (editor real, sem bug de cursor) */
+  const editorSynced = useRef(false);
+
   const editor = useEditor({
-  extensions: [
-    StarterKit,
-    Link.configure({ openOnClick: false }),
-  ],
-  content: "",
-  onUpdate({ editor }) {
-    setDescription(editor.getHTML());
-  },
-});
+    extensions: [
+      StarterKit,
+      Link.configure({ openOnClick: false }),
+    ],
+    content: "",
+    onUpdate({ editor }) {
+      setDescription(editor.getHTML());
+    },
+  });
 
-useEffect(() => {
-  if (!editor) return;
-  if (!description) return;
-
-  editor.commands.setContent(description);
-}, [editor]);
-
-
-  /* 🔼 ADIÇÃO */
+  // Sync description into TipTap once — works regardless of which arrives first
+  useEffect(() => {
+    if (!editor || editorSynced.current || !description) return;
+    editorSynced.current = true;
+    editor.commands.setContent(description);
+  }, [editor, description]);
 
   async function resizeAndCompressImage(file) {
   return new Promise((resolve) => {
@@ -184,36 +178,16 @@ useEffect(() => {
 
 
   async function handleFileChange(e) {
-  const selected = e.target.files?.[0];
-  if (!selected) return;
+    const selected = e.target.files?.[0];
+    if (!selected) return;
 
-  const optimized = await resizeAndCompressImage(selected);
+    const optimized = await resizeAndCompressImage(selected);
 
-  setFile(optimized);
-  setPreviewUrl(URL.createObjectURL(optimized));
-}
-
-
-  async function uploadImage() {
-    if (!file && previewUrl) return previewUrl;
-    if (!file) return null;
-    if (!user?.id) {
-      toast("Sua sessão ainda está carregando. Tente novamente.");
-      return null;
-    }
-    const fileName = `${user.id}-${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage
-      .from("event-images")
-      .upload(fileName, file);
-    if (error) {
-      toast("Erro ao subir imagem.");
-      return null;
-    }
-    const { data: urlData } = supabase.storage
-      .from("event-images")
-      .getPublicUrl(fileName);
-    return urlData?.publicUrl || null;
+    draftFileStore.set(optimized); // carry File across navigation
+    setFile(optimized);
+    setPreviewUrl(URL.createObjectURL(optimized));
   }
+
 
   const storedDraft = (() => {
   try {
@@ -240,29 +214,21 @@ const resolvedIsPublic =
   false; // fallback seguro (gratuito só se nunca foi pago)
 
 
-  async function goToReview() {
-    if (isSaving) return;
-    if (authLoading) return toast("Carregando sessão... tente de novo.");
+  function goToReview() {
+    if (authLoading) return toast("Loading session… try again.");
     if (!user?.id) {
-      toast("Você precisa estar logado para criar evento.");
+      toast("You must be logged in to create an event.");
       navigate("/login", { replace: true });
       return;
     }
-    if (!title) return toast("Título obrigatório.");
-    if (!eventDate) return toast("Data obrigatória.");
-    if (state?.event_format === "in_person" && !locationField)
-      return toast("Endereço obrigatório.");
-    if (state?.event_format === "online" && !onlineUrl)
-      return toast("Link obrigatório.");
-    if (state?.is_paid && (!price || Number(price) <= 0))
-      return toast("Preço inválido.");
-
-    setIsSaving(true);
-    const finalImageUrl = await uploadImage();
-    if (!finalImageUrl) {
-      setIsSaving(false);
-      return toast("Escolha uma imagem válida.");
-    }
+    if (!title.trim()) return toast("Title is required.");
+    if (!eventDate) return toast("Date is required.");
+    if (resolvedEventFormat === "in_person" && !locationField.trim())
+      return toast("Address is required.");
+    if (resolvedEventFormat === "online" && !onlineUrl.trim())
+      return toast("Online URL is required.");
+    if (resolvedIsPaid && (!price || Number(price) <= 0))
+      return toast("Enter a valid price.");
 
     const draft = {
       event_id: state?.event_id ?? null,
@@ -276,7 +242,9 @@ const resolvedIsPublic =
       is_paid: resolvedIsPaid,
       is_public: resolvedIsPublic,
       event_format: resolvedEventFormat,
-      image_url: finalImageUrl,
+      // blob: URL stays valid for the lifetime of this SPA tab session
+      // actual upload happens in ReviewEvent.publish()
+      image_url: previewUrl || "",
     };
     sessionStorage.setItem("vg_create_event_draft", JSON.stringify(draft));
 
@@ -392,8 +360,8 @@ const resolvedIsPublic =
         </label>
       </div>
 
-      <Button onClick={goToReview} disabled={isSaving}>
-        {isSaving ? "Processando..." : "Revisar evento"}
+      <Button onClick={goToReview}>
+        Review Event →
       </Button>
     </div>
   );

@@ -1,4 +1,7 @@
-import { ensureUserProfile } from "../auth/authActions";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../supabase/client";
+import { ensureUserProfile } from "./ensureUserProfile";
 
 export default function AuthCallback() {
   const navigate = useNavigate();
@@ -50,7 +53,7 @@ export default function AuthCallback() {
         fontFamily: "system-ui",
       }}
     >
-      Processando login...
+      Signing you in…
     </div>
   );
 }

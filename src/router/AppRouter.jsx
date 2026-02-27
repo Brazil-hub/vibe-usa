@@ -19,14 +19,16 @@ import EventOverviewPage from "../dashboard/events/EventOverviewPage";
 import EventGuestsPage from "../dashboard/events/EventGuestsPage";
 
 import AdminReviewPage from "../pages/Admin/AdminReviewPage";
+import AuthCallback from "../auth/AuthCallback";
 
 export default function AppRouter() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        {/* PUBLICAS */}
+        {/* PUBLIC */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* EVENTO (publica por rota; a página pode exigir login internamente se for privado) */}
         <Route path="/event/:id" element={<EventDetailsPage />} />

@@ -115,13 +115,6 @@ export default function EventPostCard({
           💬 {post.commentsCount}
         </span>
 
-        <EventPostComments
-          postId={post.id}
-          canComment={canComment}
-          isOrganizer={isOrganizer}
-          onChange={onChange}
-        />
-
         {isOrganizer && (
           <div className={styles.postAdminActions}>
             {isPending && (
@@ -138,6 +131,13 @@ export default function EventPostCard({
           </div>
         )}
       </div>
+
+      <EventPostComments
+        postId={post.id}
+        canComment={canComment}
+        isOrganizer={isOrganizer}
+        onChange={onChange}
+      />
     </div>
   );
 }

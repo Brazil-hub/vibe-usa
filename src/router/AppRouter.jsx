@@ -4,6 +4,7 @@ import RequireAuth from "../auth/RequireAuth";
 import ErrorBoundary from "../components/ErrorBoundary";
 
 import Login from "../pages/Login";
+import AuthCallback from "../auth/AuthCallback";
 import HomePage from "../pages/HomePage";
 import EventDetailsPage from "../pages/EventDetailsPage";
 import ProfilePage from "../pages/ProfilePage";
@@ -21,6 +22,10 @@ import EventGuestsPage from "../dashboard/events/EventGuestsPage";
 
 import AdminReviewPage from "../pages/Admin/AdminReviewPage";
 
+import BuyTicketPage from "../pages/BuyTicket/BuyTicketPage";
+import MyTicketsPage from "../pages/MyTickets/MyTicketsPage";
+import TicketView from "../pages/MyTickets/TicketView";
+
 export default function AppRouter() {
   return (
     <ErrorBoundary>
@@ -29,6 +34,7 @@ export default function AppRouter() {
         {/* PUBLICAS */}
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* EVENTO (publica por rota; a página pode exigir login internamente se for privado) */}
         <Route path="/event/:id" element={<EventDetailsPage />} />
@@ -37,6 +43,11 @@ export default function AppRouter() {
         <Route element={<RequireAuth />}>
           <Route path="/feed" element={<HomePage />} />
           <Route path="/profile" element={<ProfilePage />} />
+
+          {/* INGRESSOS */}
+          <Route path="/event/:id/buy-ticket" element={<BuyTicketPage />} />
+          <Route path="/my-tickets" element={<MyTicketsPage />} />
+          <Route path="/my-tickets/:ticketId" element={<TicketView />} />
 
           {/* CREATE FLOW */}
           <Route path="/create/visibility" element={<VisibilitySelect />} />

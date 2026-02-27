@@ -1,43 +1,52 @@
 // src/pages/Create/EventCreateForm.jsx
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Button from "../../components/ui/Button";
-import { supabase } from "../../supabase/client";
 import { useAuth } from "../../auth/useAuth";
 import styles from "./EventCreateForm.module.css";
 import { useToast } from "../../hooks/useToast";
 import { DRAFT_SESSION_KEY } from "../../constants";
+import { draftFileStore } from "./draftFileStore";
 
-/* 🔽 ADIÇÃO (PRO, sem bug) */
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
-/* 🔼 ADIÇÃO */
 
 function toDatetimeLocal(value) {
   if (!value) return "";
-
-  // já está no formato certo
-  if (typeof value === "string" && value.includes("T")) {
-    return value.slice(0, 16);
-  }
-
+  if (typeof value === "string" && value.includes("T")) return value.slice(0, 16);
   const date = new Date(value);
   const pad = (n) => String(n).padStart(2, "0");
-
   return (
-    date.getFullYear() +
-    "-" +
-    pad(date.getMonth() + 1) +
-    "-" +
-    pad(date.getDate()) +
-    "T" +
-    pad(date.getHours()) +
-    ":" +
-    pad(date.getMinutes())
+    date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) +
+    "T" + pad(date.getHours()) + ":" + pad(date.getMinutes())
   );
 }
 
+async function resizeAndCompressImage(file) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = (e) => { img.src = e.target.result; };
+    img.onload = () => {
+      const MAX_SIZE = 1200;
+      let { width, height } = img;
+      if (width > height && width > MAX_SIZE) {
+        height = Math.round((height * MAX_SIZE) / width); width = MAX_SIZE;
+      } else if (height > MAX_SIZE) {
+        width = Math.round((width * MAX_SIZE) / height); height = MAX_SIZE;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width; canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() })),
+        "image/jpeg", 0.75
+      );
+    };
+    reader.readAsDataURL(file);
+  });
+}
 
 export default function EventCreateForm() {
   const { state } = useLocation();
@@ -45,6 +54,7 @@ export default function EventCreateForm() {
   const auth = useAuth();
   const user = auth?.user;
   const authLoading = auth?.isLoading ?? auth?.loading ?? false;
+  const { showToast, ToastComponent } = useToast();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -53,227 +63,111 @@ export default function EventCreateForm() {
   const [locationField, setLocationField] = useState("");
   const [onlineUrl, setOnlineUrl] = useState("");
   const [price, setPrice] = useState("");
-
-  const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [isSaving, setIsSaving] = useState(false);
-  const isPaid = state?.is_paid ?? false;
-  const { showToast, ToastComponent } = useToast();
 
-
-  useEffect(() => {
-  let source = state;
-
-  if (!source) {
-    try {
-      const raw = sessionStorage.getItem(DRAFT_SESSION_KEY);
-      if (raw) source = JSON.parse(raw);
-    } catch {}
-  }
-
-  if (!source) return;
-
-  setTitle(source.title || "");
-  setDescription(source.description || "");
-  if (source.event_date) {
-  setEventDate(toDatetimeLocal(source.event_date));
-}else {
-  const now = new Date();
-  const formatted =
-    now.getFullYear() +
-    "-" +
-    String(now.getMonth() + 1).padStart(2, "0") +
-    "-" +
-    String(now.getDate()).padStart(2, "0") +
-    "T" +
-    String(now.getHours()).padStart(2, "0") +
-    ":" +
-    String(now.getMinutes()).padStart(2, "0");
-
-  setEventDate(formatted);
-}
-
-  setCategory(source.category || "party");
-  setLocationField(source.location || "");
-  setOnlineUrl(source.online_url || "");
-  setPrice(source.price || "");
-  setPreviewUrl(source.image_url || null);
-}, [state]);
-
-
-
-
-  /* 🔽 ADIÇÃO (editor real, sem bug de cursor) */
-  const editor = useEditor({
-  extensions: [
-    StarterKit,
-    Link.configure({ openOnClick: false }),
-  ],
-  content: "",
-  onUpdate({ editor }) {
-    setDescription(editor.getHTML());
-  },
-});
-
-useEffect(() => {
-  if (!editor) return;
-  if (!description) return;
-
-  editor.commands.setContent(description);
-}, [editor]);
-
-
-  /* 🔼 ADIÇÃO */
-
-  async function resizeAndCompressImage(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const reader = new FileReader();
-
-    reader.onload = (e) => {
-      img.src = e.target.result;
-    };
-
-    img.onload = () => {
-      const MAX_SIZE = 1600; // px
-      let { width, height } = img;
-
-      if (width > height && width > MAX_SIZE) {
-        height = Math.round((height * MAX_SIZE) / width);
-        width = MAX_SIZE;
-      } else if (height > MAX_SIZE) {
-        width = Math.round((width * MAX_SIZE) / height);
-        height = MAX_SIZE;
-      }
-
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(img, 0, 0, width, height);
-
-      canvas.toBlob(
-        (blob) => {
-          resolve(
-            new File([blob], file.name, {
-              type: "image/jpeg",
-              lastModified: Date.now(),
-            })
-          );
-        },
-        "image/jpeg",
-        0.8 // compressão (0.7–0.85 é o sweet spot)
-      );
-    };
-
-    reader.readAsDataURL(file);
-  });
-}
-
-
-  async function handleFileChange(e) {
-  const selected = e.target.files?.[0];
-  if (!selected) return;
-
-  const optimized = await resizeAndCompressImage(selected);
-
-  setFile(optimized);
-  setPreviewUrl(URL.createObjectURL(optimized));
-}
-
-
-  async function uploadImage() {
-    if (!file && previewUrl) return previewUrl;
-    if (!file) return null;
-    if (!user?.id) {
-      showToast("Session is still loading. Try again.");
-      return null;
-    }
-    const fileName = `${user.id}-${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage
-      .from("event-images")
-      .upload(fileName, file);
-    if (error) {
-      showToast("Error uploading image.");
-      return null;
-    }
-    const { data: urlData } = supabase.storage
-      .from("event-images")
-      .getPublicUrl(fileName);
-    return urlData?.publicUrl || null;
-  }
-
+  // ── Resolved meta values (nav state → sessionStorage → safe fallback) ──
   const storedDraft = (() => {
-  try {
-    const raw = sessionStorage.getItem(DRAFT_SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
+    try { const r = sessionStorage.getItem(DRAFT_SESSION_KEY); return r ? JSON.parse(r) : null; }
+    catch { return null; }
+  })();
+  const resolvedIsPublic    = state?.is_public    ?? storedDraft?.is_public    ?? true;
+  const resolvedEventFormat = state?.event_format ?? storedDraft?.event_format ?? "in_person";
+  const resolvedIsPaid      = state?.is_paid      ?? storedDraft?.is_paid      ?? false;
+
+  // ── Load draft ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    let source = state;
+    if (!source) {
+      try { const r = sessionStorage.getItem(DRAFT_SESSION_KEY); if (r) source = JSON.parse(r); }
+      catch {}
+    }
+    if (!source) return;
+
+    setTitle(source.title || "");
+    setDescription(source.description || "");
+
+    if (source.event_date) {
+      setEventDate(toDatetimeLocal(source.event_date));
+    } else {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, "0");
+      setEventDate(
+        now.getFullYear() + "-" + pad(now.getMonth() + 1) + "-" + pad(now.getDate()) +
+        "T" + pad(now.getHours()) + ":" + pad(now.getMinutes())
+      );
+    }
+
+    setCategory(source.category || "party");
+    setLocationField(source.location || "");
+    setOnlineUrl(source.online_url || "");
+    setPrice(source.price || "");
+
+    // Blob URLs are still valid within the same SPA session
+    if (source.image_url) setPreviewUrl(source.image_url);
+  }, [state]);
+
+  // ── TipTap ──────────────────────────────────────────────────────────────
+  const editor = useEditor({
+    extensions: [StarterKit, Link.configure({ openOnClick: false })],
+    content: "",
+    onUpdate({ editor }) { setDescription(editor.getHTML()); },
+  });
+
+  const editorSynced = useRef(false);
+  useEffect(() => {
+    // Re-runs when editor initialises OR description first loads from draft.
+    // The ref prevents resetting content while the user is typing.
+    if (!editor || editorSynced.current || !description) return;
+    editorSynced.current = true;
+    editor.commands.setContent(description);
+  }, [editor, description]);
+
+  // ── Image picker ────────────────────────────────────────────────────────
+  async function handleFileChange(e) {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    const optimized = await resizeAndCompressImage(selected);
+    draftFileStore.set(optimized);                // kept in memory for publish
+    setPreviewUrl(URL.createObjectURL(optimized)); // blob URL for immediate preview
   }
-})();
 
-const resolvedIsPublic =
-  state?.is_public ??
-  storedDraft?.is_public ??
-  true; // fallback seguro
-
-  const resolvedEventFormat =
-  state?.event_format ??
-  storedDraft?.event_format ??
-  "in_person"; // fallback seguro
-
-  const resolvedIsPaid =
-  state?.is_paid ??
-  storedDraft?.is_paid ??
-  false; // fallback seguro (gratuito só se nunca foi pago)
-
-
-  async function goToReview() {
-    if (isSaving) return;
+  // ── Navigate to review ──────────────────────────────────────────────────
+  // Image is NOT uploaded here — the blob URL travels with the draft and the
+  // actual Supabase upload happens when the user hits Publish in ReviewEvent.
+  function goToReview() {
     if (authLoading) return showToast("Loading session... try again.");
     if (!user?.id) {
       showToast("You need to be logged in to create an event.");
       navigate("/login", { replace: true });
       return;
     }
-    if (!title) return showToast("Title is required.");
-    if (!eventDate) return showToast("Date is required.");
-    if (state?.event_format === "in_person" && !locationField)
-      return showToast("Address is required.");
-    if (state?.event_format === "online" && !onlineUrl)
-      return showToast("Link is required.");
-    if (state?.is_paid && (!price || Number(price) <= 0))
-      return showToast("Invalid price.");
-
-    setIsSaving(true);
-    const finalImageUrl = await uploadImage();
-    if (!finalImageUrl) {
-      setIsSaving(false);
-      return showToast("Please choose a valid image.");
-    }
+    if (!title)                                                return showToast("Title is required.");
+    if (!eventDate)                                            return showToast("Date is required.");
+    if (resolvedEventFormat === "in_person" && !locationField) return showToast("Address is required.");
+    if (resolvedEventFormat === "online"    && !onlineUrl)     return showToast("Link is required.");
+    if (resolvedIsPaid && (!price || Number(price) <= 0))      return showToast("Invalid price.");
 
     const draft = {
-      event_id: state?.event_id ?? null,
+      event_id:     state?.event_id ?? null,
       title,
       description,
-      event_date: eventDate,
+      event_date:   eventDate,
       category,
-      location: locationField,
-      online_url: onlineUrl,
-      price: resolvedIsPaid ? price : null,
-      is_paid: resolvedIsPaid,
-      is_public: resolvedIsPublic,
+      location:     locationField,
+      online_url:   onlineUrl,
+      price:        resolvedIsPaid ? price : null,
+      is_paid:      resolvedIsPaid,
+      is_public:    resolvedIsPublic,
       event_format: resolvedEventFormat,
-      image_url: finalImageUrl,
+      // blob URL or existing http URL — upload happens at publish time
+      image_url:    previewUrl || "",
     };
-    sessionStorage.setItem(DRAFT_SESSION_KEY, JSON.stringify(draft));
 
-    navigate("/create/review", {
-      state: { ...draft, fromReview: true },
-    });
+    sessionStorage.setItem(DRAFT_SESSION_KEY, JSON.stringify(draft));
+    navigate("/create/review", { state: { ...draft, fromReview: true } });
   }
 
+  // ── Render ───────────────────────────────────────────────────────────────
   return (
     <div className={styles.container}>
       <div className={styles.processHeader}>
@@ -292,16 +186,9 @@ const resolvedIsPublic =
         />
       </div>
 
-      
-
-      {/* 🔽 ÚNICA TROCA VISUAL/FUNCIONAL */}
       <div className={styles.card}>
-        <EditorContent
-          editor={editor}
-          className={styles.descriptionInput}
-        />
+        <EditorContent editor={editor} className={styles.descriptionInput} />
       </div>
-      {/* 🔼 */}
 
       <div className={styles.card}>
         <input
@@ -330,7 +217,7 @@ const resolvedIsPublic =
         </select>
       </div>
 
-      {state?.event_format === "in_person" && (
+      {resolvedEventFormat === "in_person" && (
         <div className={styles.card}>
           <input
             className={styles.input}
@@ -341,7 +228,7 @@ const resolvedIsPublic =
         </div>
       )}
 
-      {state?.event_format === "online" && (
+      {resolvedEventFormat === "online" && (
         <div className={styles.card}>
           <input
             className={styles.input}
@@ -352,8 +239,7 @@ const resolvedIsPublic =
         </div>
       )}
 
-      {(state?.is_paid ?? JSON.parse(sessionStorage.getItem(DRAFT_SESSION_KEY))?.is_paid) && (
-
+      {resolvedIsPaid && (
         <div className={styles.card}>
           <input
             className={styles.input}
@@ -381,9 +267,7 @@ const resolvedIsPublic =
         </label>
       </div>
 
-      <Button onClick={goToReview} disabled={isSaving}>
-        {isSaving ? "Processing..." : "Review Event"}
-      </Button>
+      <Button onClick={goToReview}>Review Event</Button>
 
       {ToastComponent}
     </div>

@@ -14,6 +14,8 @@ import {
   getEventAttendance,
 } from "../supabase/rsvp";
 
+import { getUserTicketForEvent } from "../supabase/tickets";
+
 import styles from "./EventDetailsPage.module.css";
 import EventPostFeed from "../components/EventPostFeed";
 import Button from "../components/ui/Button";
@@ -42,6 +44,7 @@ export default function EventDetailsPage() {
   const [rsvpStatus, setRsvpStatus] = useState(null);
   const [rsvpLoading, setRsvpLoading] = useState(false);
   const [acceptedInvite, setAcceptedInvite] = useState(false);
+  const [userTicket, setUserTicket] = useState(null);
 
   const [attendance, setAttendance] = useState({
   going: [],
@@ -100,7 +103,7 @@ useEffect(() => {
       const { data } = await getEventById(id);
       setEvent(data);
 
-      // 2️⃣ SE USUÁRIO LOGADO, BUSCA RSVP + PRESENÇAS
+      // 2️⃣ SE USUÁRIO LOGADO, BUSCA RSVP + PRESENÇAS + INGRESSO
       if (user) {
         const rsvp = await getUserRsvp(id);
         if (rsvp?.data?.status) {
@@ -108,6 +111,9 @@ useEffect(() => {
         }
 
         await loadAttendance(id);
+
+        const { data: ticket } = await getUserTicketForEvent(id);
+        setUserTicket(ticket || null);
       }
 
     } catch (err) {
@@ -343,15 +349,13 @@ useEffect(() => {
 
         </div>
 
-       {/* RSVP — CTA PRINCIPAL */}
+       {/* CTA PRINCIPAL — INGRESSO (pago) ou RSVP (gratuito) */}
 {event?.is_private && !user ? (
   <div className={styles.inviteGateCard}>
     <h3>You've been invited to this event</h3>
-
     <p>
       To RSVP, comment, or interact, you'll need to sign in or create an account.
     </p>
-
     <button
       className={styles.primaryButton}
       onClick={() => {
@@ -365,7 +369,40 @@ useEffect(() => {
       Sign in to respond
     </button>
   </div>
+) : isPaid ? (
+  /* ── EVENTO PAGO: botão de compra/ingresso ── */
+  <div className={styles.rsvpCard}>
+    {userTicket ? (
+      <>
+        <div className={styles.ticketOwnedBadge}>🎟️ Você tem ingresso!</div>
+        <Button
+          onClick={() => navigate(`/my-tickets/${userTicket.id}`)}
+          className={styles.rsvpPrimary}
+        >
+          Ver meu ingresso
+        </Button>
+      </>
+    ) : (
+      <>
+        <div className={styles.priceHighlight}>{priceLabel}</div>
+        <Button
+          onClick={() => {
+            if (!user) {
+              localStorage.setItem("postLoginRedirect", window.location.pathname);
+              navigate("/login");
+              return;
+            }
+            navigate(`/event/${id}/buy-ticket`);
+          }}
+          className={styles.rsvpPrimary}
+        >
+          Comprar ingresso 🎟️
+        </Button>
+      </>
+    )}
+  </div>
 ) : (
+  /* ── EVENTO GRATUITO: RSVP normal ── */
   <div className={styles.rsvpCard}>
     <Button
       onClick={() => updateRsvp("going")}

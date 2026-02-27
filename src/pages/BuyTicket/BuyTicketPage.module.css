@@ -1,0 +1,258 @@
+.page {
+  min-height: 100dvh;
+  background: #0a0a0a;
+  color: #f9fafb;
+  display: flex;
+  flex-direction: column;
+  max-width: 480px;
+  margin: 0 auto;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* ── LOADING ── */
+.loading {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+}
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #ff1493;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.notFound {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  background: #0a0a0a;
+}
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px 12px;
+  position: sticky;
+  top: 0;
+  background: rgba(10,10,10,0.95);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+  border-bottom: 1px solid #1a1a1a;
+}
+.back {
+  background: none;
+  border: none;
+  color: #ff1493;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+  white-space: nowrap;
+}
+.headerTitle {
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+/* ── EVENT CARD ── */
+.eventCard {
+  margin: 16px 20px 0;
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.eventImg {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+.eventInfo {
+  padding: 12px 16px 8px;
+  flex: 1;
+}
+.eventTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+.eventMeta {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0 0 4px;
+}
+.priceTag {
+  margin: 0 16px 14px;
+  display: inline-block;
+  background: #ff1493;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 6px 14px;
+  border-radius: 20px;
+  align-self: flex-start;
+}
+
+/* ── FORM ── */
+.formCard {
+  margin: 16px 20px 0;
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 16px;
+  padding: 20px;
+}
+.formTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #e5e7eb;
+  margin: 0 0 16px;
+}
+.field {
+  margin-bottom: 14px;
+}
+.label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9ca3af;
+  margin-bottom: 6px;
+}
+.input {
+  width: 100%;
+  background: #1e1e1e;
+  border: 1.5px solid #2a2a2a;
+  border-radius: 12px;
+  color: #f9fafb;
+  font-size: 15px;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input:focus {
+  border-color: #ff1493;
+}
+.input::placeholder {
+  color: #4b5563;
+}
+
+/* ── SUMMARY ── */
+.summaryCard {
+  margin: 16px 20px 0;
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 16px;
+  padding: 18px 20px;
+}
+.summaryRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #9ca3af;
+}
+.summaryDivider {
+  height: 1px;
+  background: #2a2a2a;
+  margin: 10px 0;
+}
+.summaryTotal {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f9fafb;
+}
+.totalPrice {
+  color: #ff1493;
+  font-size: 18px;
+  font-weight: 800;
+}
+.paymentNote {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+}
+
+/* ── CTA ── */
+.ctaArea {
+  margin: 20px 20px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.btnPrimary {
+  width: 100%;
+  padding: 16px;
+  background: #ff1493;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.12s;
+  box-shadow: 0 6px 20px rgba(255, 20, 147, 0.35);
+  font-family: inherit;
+}
+.btnPrimary:active { transform: scale(0.97); }
+.btnPrimary:disabled { opacity: 0.5; pointer-events: none; }
+
+.btnGhost {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  color: #9ca3af;
+  border: 1.5px solid #2a2a2a;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.btnGhost:hover { border-color: #444; }
+
+/* ── ALREADY HAS TICKET ── */
+.card {
+  margin: 40px 20px;
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 20px;
+  padding: 32px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+}
+.alreadyIcon { font-size: 48px; }
+.alreadyTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+.alreadyText {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.bottomSpacer { height: 40px; }

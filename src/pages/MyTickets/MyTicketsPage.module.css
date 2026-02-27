@@ -1,0 +1,194 @@
+.page {
+  min-height: 100dvh;
+  background: #0a0a0a;
+  color: #f9fafb;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.loading {
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0a0a0a;
+}
+.spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid #2a2a2a;
+  border-top-color: #ff1493;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── HEADER ── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  background: rgba(10,10,10,0.95);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+  border-bottom: 1px solid #1a1a1a;
+}
+.back {
+  background: none;
+  border: none;
+  color: #ff1493;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+}
+.headerTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+
+/* ── EMPTY ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 12px;
+  text-align: center;
+}
+.emptyIcon { font-size: 52px; }
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 800;
+  color: #fff;
+  margin: 0;
+}
+.emptyText {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+  max-width: 280px;
+}
+.btnPrimary {
+  margin-top: 8px;
+  padding: 14px 28px;
+  background: #ff1493;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 6px 18px rgba(255,20,147,0.3);
+}
+
+/* ── CONTENT ── */
+.content {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+  margin: 0 0 10px;
+}
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── TICKET CARD ── */
+.ticketCard {
+  width: 100%;
+  background: #141414;
+  border: 1px solid #222;
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0;
+  cursor: pointer;
+  text-align: left;
+  padding: 0;
+  transition: border-color 0.15s, transform 0.12s;
+}
+.ticketCard:active { transform: scale(0.98); }
+.ticketCard:hover { border-color: #333; }
+.dimmed { opacity: 0.5; }
+
+.ticketImg {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.ticketImgPlaceholder {
+  width: 72px;
+  height: 72px;
+  background: #1e1e1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  flex-shrink: 0;
+}
+.ticketInfo {
+  flex: 1;
+  padding: 12px 14px;
+  min-width: 0;
+}
+.ticketEventTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ticketDate {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0 0 4px;
+}
+.ticketCode {
+  font-size: 11px;
+  color: #ff1493;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  margin: 0;
+}
+.ticketRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  padding: 12px 14px;
+  flex-shrink: 0;
+}
+.statusBadge {
+  font-size: 11px;
+  font-weight: 700;
+  border: 1.5px solid;
+  border-radius: 20px;
+  padding: 2px 8px;
+}
+.arrow {
+  font-size: 20px;
+  color: #4b5563;
+}
+
+.bottomSpacer { height: 60px; }

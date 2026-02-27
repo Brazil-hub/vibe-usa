@@ -27,11 +27,16 @@ export default function EventCard({ event }) {
   return (
     <Link to={`/event/${event.id}`} className={styles.card}>
       <div className={styles.imageWrap}>
-        <img
-          src={event.image_url}
-          alt={event.title}
-          loading="lazy"
-        />
+        {event.image_url ? (
+          <img
+            src={event.image_url}
+            alt={event.title}
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
+          />
+        ) : null}
       </div>
 
       <div className={styles.body}>
@@ -44,7 +49,7 @@ export default function EventCard({ event }) {
 
           {event.is_paid && event.price ? (
             <div className={styles.price}>
-              R$ {event.price}
+              ${event.price}
             </div>
           ) : (
             <div className={styles.price}>

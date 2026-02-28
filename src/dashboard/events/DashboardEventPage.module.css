@@ -2,12 +2,8 @@
 .page {
   min-height: 100vh;
   padding: 24px 16px 64px;
-  background: radial-gradient(
-    1200px 600px at top,
-    #0f172a,
-    #020617
-  );
-  color: #e5e7eb;
+  background: #fff5f8;
+  color: #111827;
   display: flex;
   justify-content: center;
 }
@@ -25,7 +21,7 @@
   margin-bottom: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: #93c5fd;
+  color: #ff2d8d;
   text-decoration: none;
 }
 
@@ -38,7 +34,7 @@
   font-size: 22px;
   font-weight: 700;
   line-height: 1.2;
-  color: #ffffff;
+  color: #111827;
   margin-bottom: 6px;
   word-break: break-word;
 }
@@ -50,8 +46,8 @@
   font-size: 11px;
   font-weight: 600;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  background: rgba(255, 45, 141, 0.15);
+  color: #ff2d8d;
 }
 
 /* ====== CARD ====== */
@@ -61,8 +57,9 @@
   background: #ffffff;
   border-radius: 14px;
   padding: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
-  color: #0f172a;
+  box-shadow: 0 10px 26px rgba(255, 45, 141, 0.12);
+  border: 1px solid rgba(255, 182, 193, 0.35);
+  color: #111827;
 }
 
 /* Invite box */

@@ -7,6 +7,7 @@ import styles from "./EventCreateForm.module.css";
 import { draftFileStore } from "./draftFileStore";
 import Cropper from "react-easy-crop";
 import { getCroppedImg } from "./cropUtils";
+import Autocomplete from "react-google-autocomplete";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -204,6 +205,8 @@ export default function EventCreateForm() {
       setPreviewUrl(URL.createObjectURL(optimized));
 
       setIsCropping(false);
+
+      if (imageToCrop) URL.revokeObjectURL(imageToCrop);
       setImageToCrop(null);
     } catch (e) {
       console.error(e);
@@ -213,6 +216,8 @@ export default function EventCreateForm() {
 
   function handleCropCancel() {
     setIsCropping(false);
+
+    if (imageToCrop) URL.revokeObjectURL(imageToCrop);
     setImageToCrop(null);
   }
 
@@ -351,11 +356,28 @@ const resolvedIsPublic =
 
       {state?.event_format === "in_person" && (
         <div className={styles.card}>
-          <input
+          <Autocomplete
             className={styles.input}
-            placeholder="Endereço"
-            value={locationField}
+            apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+            options={{
+              types: ["establishment", "geocode"],
+            }}
+            placeholder="Nome ou Endereço do local"
+            onPlaceSelected={(place) => {
+              if (place && place.name && place.formatted_address) {
+                // If the user selects a specific venue, use its name and address
+                const combined = place.name !== place.formatted_address.split(",")[0]
+                  ? `${place.name}, ${place.formatted_address}`
+                  : place.formatted_address;
+                setLocationField(combined);
+              } else if (place && place.formatted_address) {
+                setLocationField(place.formatted_address);
+              } else {
+                setLocationField(place?.name || "");
+              }
+            }}
             onChange={(e) => setLocationField(e.target.value)}
+            defaultValue={locationField}
           />
         </div>
       )}

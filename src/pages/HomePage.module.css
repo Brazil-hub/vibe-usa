@@ -154,10 +154,7 @@
   gap: 22px;
 }
 
-/* Sombra suave no primeiro card (efeito destaque) */
-.list > *:first-child {
-  box-shadow: 0 10px 30px rgba(255, 45, 141, 0.12);
-}
+/* Sombra suave no primeiro card (efeito destaque) - Removido (Task 3) */
 /* =========================================
    ANIMAÇÃO DE ENTRADA DOS CARDS
    ========================================= */

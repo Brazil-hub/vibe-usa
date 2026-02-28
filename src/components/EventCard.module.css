@@ -110,6 +110,12 @@
   font-weight: 600;
   color: #111827;
 }
+
+.distance {
+  color: #ff2d8d;
+  font-weight: 700;
+}
+
 .weekday{
   font-weight: 900;
   color: var(--pink-600);

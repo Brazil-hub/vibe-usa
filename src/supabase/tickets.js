@@ -124,14 +124,12 @@ export async function generateTicket({
   const { data: ticket, error } = await supabase
     .from("tickets")
     .insert({
-      event_id:       eventId,
-      user_id:        null,
-      code,
-      attendee_name:  attendeeName,
-      attendee_email: attendeeEmail,
-      ticket_type:    "standard",
-      status:         "active",
-      is_generated:   true,
+      event_id:         eventId,
+      user_id:          null,
+      qr_code:          code,
+      name:             attendeeName,
+      status:           "active",
+      payment_provider: "generated",
     })
     .select()
     .single();
@@ -226,11 +224,13 @@ export async function getEventTickets(eventId) {
 // ─────────────────────────────────────────────
 
 export async function checkInTicket(ticketId) {
+  const now = new Date().toISOString();
   const { data, error } = await supabase
     .from("tickets")
     .update({
       status:        "used",
-      checked_in_at: new Date().toISOString(),
+      used_at:       now,
+      checked_in_at: now,
     })
     .eq("id", ticketId)
     .select()

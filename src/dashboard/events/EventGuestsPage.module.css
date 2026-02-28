@@ -4,7 +4,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  color: #f9fafb;
+  color: #111827;
 }
 
 /* ─── HEADER ───────────────────────────────────────────── */
@@ -23,7 +23,7 @@
 .headerTitle {
   font-size: 18px;
   font-weight: 700;
-  color: #f9fafb;
+  color: #111827;
   margin-bottom: 4px;
 }
 
@@ -37,7 +37,7 @@
   padding: 9px 16px;
   border-radius: 10px;
   border: none;
-  background: #ff1493;
+  background: #ff3f8e;
   color: #fff;
   font-size: 13px;
   font-weight: 600;
@@ -61,8 +61,8 @@
   gap: 6px;
   padding: 6px 12px;
   border-radius: 999px;
-  border: 1px solid #2a2a2a;
-  background: #111;
+  border: 1px solid #e5e7eb;
+  background: #fff;
   color: #6b7280;
   font-size: 13px;
   font-weight: 500;
@@ -71,20 +71,20 @@
 }
 
 .filterTab:hover {
-  color: #e5e7eb;
-  border-color: #3a3a3a;
+  color: #374151;
+  border-color: #d1d5db;
 }
 
 .filterActive {
-  background: rgba(255, 20, 147, 0.1);
-  border-color: #ff1493;
-  color: #ff1493;
+  background: rgba(255, 63, 142, 0.08);
+  border-color: #ff3f8e;
+  color: #ff3f8e;
 }
 
 .filterCount {
   font-size: 11px;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.06);
   padding: 1px 6px;
   border-radius: 999px;
 }
@@ -102,21 +102,21 @@
   align-items: center;
   gap: 12px;
   padding: 12px 14px;
-  background: #111;
-  border: 1px solid #1e1e1e;
+  background: #fff;
+  border: 1px solid #f0e4ec;
   border-radius: 12px;
   transition: border-color 0.12s;
 }
 
 .guestRow:hover {
-  border-color: #2a2a2a;
+  border-color: #e5e7eb;
 }
 
 .guestAvatar {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #ff1493, #9333ea);
+  background: linear-gradient(135deg, #ff3f8e, #9333ea);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,7 +135,7 @@
 .guestName {
   font-size: 14px;
   font-weight: 600;
-  color: #f9fafb;
+  color: #111827;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -168,13 +168,13 @@
 
 .guestDate {
   font-size: 11px;
-  color: #4b5563;
+  color: #9ca3af;
 }
 
 /* ─── EMPTY ────────────────────────────────────────────── */
 .empty {
   font-size: 14px;
-  color: #4b5563;
+  color: #9ca3af;
   text-align: center;
   padding: 32px 0;
 }
@@ -182,10 +182,10 @@
 /* ─── SKELETON ─────────────────────────────────────────── */
 .skeletonRow {
   height: 62px;
-  background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
-  border: 1px solid #1a1a1a;
+  border: 1px solid #f0e4ec;
 }
 
 @keyframes shimmer {

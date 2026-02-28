@@ -104,6 +104,7 @@ export default function EventTicketsPage() {
     const q = search.toLowerCase();
     return (
       t.name?.toLowerCase().includes(q) ||
+      t.attendee_email?.toLowerCase().includes(q) ||
       t.qr_code?.toLowerCase().includes(q)
     );
   });
@@ -115,6 +116,14 @@ export default function EventTicketsPage() {
     cancelled: tickets.filter((t) => t.status === "cancelled").length,
   };
 
+  const revenue = event?.is_paid && event?.price
+    ? (stats.active + stats.used) * (event.price || 0)
+    : 0;
+
+  const revenueFormatted = revenue > 0
+    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(revenue)
+    : null;
+
   return (
     <div className={styles.page}>
       {/* STATS */}
@@ -125,16 +134,22 @@ export default function EventTicketsPage() {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statNum} style={{ color: "#22c55e" }}>{stats.active}</span>
-          <span className={styles.statLabel}>Ativos</span>
+          <span className={styles.statLabel}>Active</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statNum} style={{ color: "#6b7280" }}>{stats.used}</span>
-          <span className={styles.statLabel}>Usados</span>
+          <span className={styles.statLabel}>Used</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statNum} style={{ color: "#ef4444" }}>{stats.cancelled}</span>
-          <span className={styles.statLabel}>Cancelados</span>
+          <span className={styles.statLabel}>Cancelled</span>
         </div>
+        {revenueFormatted && (
+          <div className={styles.statCard}>
+            <span className={styles.statNum} style={{ color: "#22c55e", fontSize: 16 }}>{revenueFormatted}</span>
+            <span className={styles.statLabel}>Revenue</span>
+          </div>
+        )}
       </div>
 
       {/* ACTIONS */}

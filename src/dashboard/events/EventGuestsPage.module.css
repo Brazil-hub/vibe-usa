@@ -1,109 +1,194 @@
+/* ─── PAGE ─────────────────────────────────────────────── */
 .page {
-  max-width: 680px;
-  margin: 0 auto;
-  padding: 16px;
-  color: #111;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #f9fafb;
 }
 
-/* HEADER */
+/* ─── HEADER ───────────────────────────────────────────── */
 .header {
-  background: #111;
-  color: #fff;
-  padding: 16px;
-  border-radius: 14px;
-  margin-bottom: 20px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
 }
 
-.header h1 {
-  margin: 0 0 6px;
+.headerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.headerTitle {
   font-size: 18px;
-  font-weight: 600;
-  color: #fff;
+  font-weight: 700;
+  color: #f9fafb;
+  margin-bottom: 4px;
 }
 
-.header p {
-  margin: 0 0 12px;
+.headerSub {
   font-size: 13px;
-  color: #ccc;
+  color: #6b7280;
+  line-height: 1.4;
 }
 
-/* BOTÃO COPIAR */
-.copyButton {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
+.copyBtn {
+  padding: 9px 16px;
+  border-radius: 10px;
   border: none;
-  background: #fff;
-  color: #111;
-  font-size: 14px;
+  background: #ff1493;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.copyBtn:hover { opacity: 0.87; }
+
+/* ─── FILTER TABS ──────────────────────────────────────── */
+.filterRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.filterTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #2a2a2a;
+  background: #111;
+  color: #6b7280;
+  font-size: 13px;
   font-weight: 500;
   cursor: pointer;
+  transition: background 0.12s, color 0.12s, border-color 0.12s;
 }
 
-/* LISTAS */
-.listSection {
-  margin-bottom: 18px;
+.filterTab:hover {
+  color: #e5e7eb;
+  border-color: #3a3a3a;
 }
 
-.listSection h2 {
+.filterActive {
+  background: rgba(255, 20, 147, 0.1);
+  border-color: #ff1493;
+  color: #ff1493;
+}
+
+.filterCount {
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+
+/* ─── LIST ─────────────────────────────────────────────── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── GUEST ROW ────────────────────────────────────────── */
+.guestRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #111;
+  border: 1px solid #1e1e1e;
+  border-radius: 12px;
+  transition: border-color 0.12s;
+}
+
+.guestRow:hover {
+  border-color: #2a2a2a;
+}
+
+.guestAvatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff1493, #9333ea);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  flex-shrink: 0;
+  letter-spacing: 0.5px;
+}
+
+.guestInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.guestName {
   font-size: 14px;
   font-weight: 600;
-  margin-bottom: 6px;
-  color: #111;
-}
-
-.listSection ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.listSection li {
-  padding: 10px 12px;
-  background: #f5f5f5;
-  border-radius: 10px;
-  margin-bottom: 6px;
-  font-size: 13px;
-  color: #111;
+  color: #f9fafb;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* TEXTO AUXILIAR */
-.muted {
-  font-size: 13px;
-  color: #777;
-}
-/* ===== FIX CONTRASTE NAVEGAÇÃO E TÍTULO ===== */
-
-/* força links visíveis dentro da página */
-.page a {
-  color: #fff;
-  text-decoration: none;
+.guestEmail {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.page a:hover {
-  text-decoration: underline;
+.guestRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
-/* força título do evento visível */
-.page h1,
-.page h2 {
-  color: #111;
+.statusBadge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
 }
 
-/* quando título estiver dentro de fundo escuro */
-.header h1 {
-  color: #fff;
+.guestDate {
+  font-size: 11px;
+  color: #4b5563;
 }
 
-/* evita texto escuro em fundo escuro herdado */
-.page * {
-  color-scheme: light;
+/* ─── EMPTY ────────────────────────────────────────────── */
+.empty {
+  font-size: 14px;
+  color: #4b5563;
+  text-align: center;
+  padding: 32px 0;
 }
 
-/* corrige vazamento visual da sidebar */
-.page {
-  background: #fff;
+/* ─── SKELETON ─────────────────────────────────────────── */
+.skeletonRow {
+  height: 62px;
+  background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border: 1px solid #1a1a1a;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }

@@ -15,6 +15,7 @@ import PaymentSelect from "../pages/Create/PaymentSelect";
 import EventCreateForm from "../pages/Create/EventCreateForm";
 import ReviewEvent from "../pages/Create/ReviewEvent";
 
+import DashboardLayout from "../dashboard/DashboardLayout";
 import OverviewPage from "../dashboard/overview/OverviewPage";
 import DashboardEventPage from "../dashboard/events/DashboardEventPage";
 import EventOverviewPage from "../dashboard/events/EventOverviewPage";
@@ -57,12 +58,9 @@ export default function AppRouter() {
           <Route path="/create/review" element={<ReviewEvent />} />
 
           {/* DASHBOARD */}
-          <Route path="/dashboard">
+          <Route path="/dashboard" element={<DashboardLayout />}>
             <Route index element={<OverviewPage />} />
-            <Route path="event/:id" element={<DashboardEventPage />}>
-              <Route index element={<EventOverviewPage />} />
-              <Route path="guests" element={<EventGuestsPage />} />
-            </Route>
+            <Route path="event/:id" element={<DashboardEventPage />} />
           </Route>
 
           {/* ADMIN */}

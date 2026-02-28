@@ -30,8 +30,8 @@ function writeCache(cache) {
   catch {}
 }
 
-const DEFAULT_CENTER = [39.5, -98.35]; // US geographic center
-const DEFAULT_ZOOM = 4;
+const DEFAULT_CENTER = [37.7599, -122.4148]; // Mission District, San Francisco
+const DEFAULT_ZOOM = 14;
 
 export default function EventsMapView({ events }) {
   const [plotted, setPlotted] = useState([]);

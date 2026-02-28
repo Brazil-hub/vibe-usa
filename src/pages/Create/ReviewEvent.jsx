@@ -22,7 +22,9 @@ export default function ReviewEvent() {
     try {
       const raw = sessionStorage.getItem("vg_create_event_draft");
       if (raw) data = JSON.parse(raw);
-    } catch {}
+    } catch {
+      // ignore JSON parse error
+    }
     if (location.state) {
       data = { ...data, ...location.state };
     }

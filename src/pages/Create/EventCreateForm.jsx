@@ -1,10 +1,12 @@
 // src/pages/Create/EventCreateForm.jsx
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Button from "../../components/ui/Button";
 import { useAuth } from "../../auth/useAuth";
 import styles from "./EventCreateForm.module.css";
 import { draftFileStore } from "./draftFileStore";
+import Cropper from "react-easy-crop";
+import { getCroppedImg } from "./cropUtils";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -64,8 +66,15 @@ export default function EventCreateForm() {
   const [onlineUrl, setOnlineUrl] = useState("");
   const [price, setPrice] = useState("");
 
-  const [file, setFile] = useState(null);
+  const [, setFile] = useState(null); // Used to trigger rerender if needed, but primarily saved in draftFileStore
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  // Cropper states
+  const [imageToCrop, setImageToCrop] = useState(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [isCropping, setIsCropping] = useState(false);
 
 
   useEffect(() => {
@@ -75,7 +84,9 @@ export default function EventCreateForm() {
     try {
       const raw = sessionStorage.getItem("vg_create_event_draft");
       if (raw) source = JSON.parse(raw);
-    } catch {}
+    } catch {
+      // ignore JSON parse error
+    }
   }
 
   if (!source) return;
@@ -177,15 +188,44 @@ export default function EventCreateForm() {
 }
 
 
+  const onCropComplete = useCallback((croppedArea, croppedAreaPixels) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
+
+  async function handleCropSave() {
+    if (!imageToCrop || !croppedAreaPixels) return;
+
+    try {
+      const croppedImage = await getCroppedImg(imageToCrop, croppedAreaPixels);
+      const optimized = await resizeAndCompressImage(croppedImage);
+
+      draftFileStore.set(optimized);
+      setFile(optimized);
+      setPreviewUrl(URL.createObjectURL(optimized));
+
+      setIsCropping(false);
+      setImageToCrop(null);
+    } catch (e) {
+      console.error(e);
+      toast("Error cropping image");
+    }
+  }
+
+  function handleCropCancel() {
+    setIsCropping(false);
+    setImageToCrop(null);
+  }
+
   async function handleFileChange(e) {
     const selected = e.target.files?.[0];
     if (!selected) return;
 
-    const optimized = await resizeAndCompressImage(selected);
+    // We don't optimize here yet, we optimize after cropping
+    const objectUrl = URL.createObjectURL(selected);
+    setImageToCrop(objectUrl);
+    setIsCropping(true);
 
-    draftFileStore.set(optimized); // carry File across navigation
-    setFile(optimized);
-    setPreviewUrl(URL.createObjectURL(optimized));
+    e.target.value = ""; // Reset the input so the same file can be selected again
   }
 
 
@@ -363,6 +403,42 @@ const resolvedIsPublic =
       <Button onClick={goToReview}>
         Review Event →
       </Button>
+
+      {isCropping && (
+        <div className={styles.cropperOverlay}>
+          <div className={styles.cropperContainer}>
+            <div className={styles.cropperInner}>
+              <Cropper
+                image={imageToCrop}
+                crop={crop}
+                zoom={zoom}
+                aspect={16 / 9}
+                onCropChange={setCrop}
+                onCropComplete={onCropComplete}
+                onZoomChange={setZoom}
+              />
+            </div>
+            <div className={styles.cropperControls}>
+              <input
+                type="range"
+                value={zoom}
+                min={1}
+                max={3}
+                step={0.1}
+                aria-labelledby="Zoom"
+                onChange={(e) => {
+                  setZoom(e.target.value);
+                }}
+                className={styles.zoomSlider}
+              />
+              <div className={styles.cropperButtons}>
+                <Button onClick={handleCropCancel} className={styles.cancelBtn}>Cancel</Button>
+                <Button onClick={handleCropSave}>Save Crop</Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

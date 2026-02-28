@@ -195,6 +195,26 @@ useEffect(() => {
 
   const isOnline = event.event_format === "online";
   const isPaid = Boolean(event.is_paid);
+
+  // Map visibility logic (1 hour after midnight of the event day)
+  let showMap = false;
+  if (!isOnline && event.location && event.event_date) {
+    const eventDate = new Date(event.event_date);
+    // Set to 1:00 AM the next day
+    const hideMapDate = new Date(
+      eventDate.getFullYear(),
+      eventDate.getMonth(),
+      eventDate.getDate() + 1,
+      1, // 1 hour after midnight
+      0,
+      0,
+      0
+    );
+    if (new Date() < hideMapDate) {
+      showMap = true;
+    }
+  }
+
   const hasImage = Boolean(event.image_url);
 
   const date = event.event_date ? new Date(event.event_date) : null;
@@ -410,7 +430,22 @@ useEffect(() => {
             <h3 className={styles.sectionTitle}>Onde vai rolar</h3>
 
             {!isOnline && event.location && (
-              <p className={styles.locationRow}>📍 {event.location}</p>
+              <>
+                <p className={styles.locationRow}>📍 {event.location}</p>
+                {showMap && (
+                  <div style={{ marginTop: 12, borderRadius: 12, overflow: "hidden" }}>
+                    <iframe
+                      width="100%"
+                      height="200"
+                      style={{ border: 0 }}
+                      loading="lazy"
+                      allowFullScreen
+                      referrerPolicy="no-referrer-when-downgrade"
+                      src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}&q=${encodeURIComponent(event.location)}`}
+                    ></iframe>
+                  </div>
+                )}
+              </>
             )}
 
             {isOnline && event.online_url && (

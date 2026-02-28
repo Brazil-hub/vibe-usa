@@ -67,6 +67,9 @@ export default function EventCard({ event }) {
         {location && (
           <div className={styles.location}>
             {location}
+            {event.distanceText && (
+              <span className={styles.distance}> • {event.distanceText}</span>
+            )}
           </div>
         )}
       </div>

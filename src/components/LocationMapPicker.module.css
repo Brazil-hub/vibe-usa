@@ -1,0 +1,68 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: 100%;
+}
+
+/* ── Input row ── */
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 16px;
+  color: #111827;
+  font-family: inherit;
+  padding: 0;
+}
+
+.input::placeholder {
+  color: #9ca3af;
+}
+
+/* ── Geocoding spinner ── */
+.spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 63, 142, 0.25);
+  border-top-color: #ff3f8e;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Map wrapper ── */
+.mapWrap {
+  margin-top: 12px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #f0e4ec;
+  background: #f9f5f7;
+}
+
+.map {
+  height: 220px;
+  width: 100%;
+  display: block;
+}
+
+.hint {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  padding: 6px 12px 8px;
+  background: #fff;
+  margin: 0;
+}

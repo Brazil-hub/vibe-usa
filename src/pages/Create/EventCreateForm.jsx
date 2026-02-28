@@ -7,6 +7,7 @@ import styles from "./EventCreateForm.module.css";
 import { useToast } from "../../hooks/useToast";
 import { DRAFT_SESSION_KEY } from "../../constants";
 import { draftFileStore } from "./draftFileStore";
+import LocationMapPicker from "../../components/LocationMapPicker";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -61,6 +62,8 @@ export default function EventCreateForm() {
   const [eventDate, setEventDate] = useState("");
   const [category, setCategory] = useState("party");
   const [locationField, setLocationField] = useState("");
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
   const [onlineUrl, setOnlineUrl] = useState("");
   const [price, setPrice] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
@@ -99,6 +102,8 @@ export default function EventCreateForm() {
 
     setCategory(source.category || "party");
     setLocationField(source.location || "");
+    setLat(source.lat ?? null);
+    setLng(source.lng ?? null);
     setOnlineUrl(source.online_url || "");
     setPrice(source.price || "");
 
@@ -154,6 +159,8 @@ export default function EventCreateForm() {
       event_date:   eventDate,
       category,
       location:     locationField,
+      lat:          lat,
+      lng:          lng,
       online_url:   onlineUrl,
       price:        resolvedIsPaid ? price : null,
       is_paid:      resolvedIsPaid,
@@ -219,11 +226,13 @@ export default function EventCreateForm() {
 
       {resolvedEventFormat === "in_person" && (
         <div className={styles.card}>
-          <input
-            className={styles.input}
-            placeholder="Address"
+          <LocationMapPicker
             value={locationField}
-            onChange={(e) => setLocationField(e.target.value)}
+            onChange={(addr, newLat, newLng) => {
+              setLocationField(addr);
+              setLat(newLat);
+              setLng(newLng);
+            }}
           />
         </div>
       )}

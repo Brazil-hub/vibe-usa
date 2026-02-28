@@ -106,6 +106,8 @@ export default function ReviewEvent() {
         category:     state.category,
         event_format: state.event_format,
         location:     state.location   || null,
+        lat:          state.lat        ?? null,
+        lng:          state.lng        ?? null,
         online_url:   state.online_url || null,
         image_url:    imageUrl         || null,
         is_paid:      !!state.is_paid,

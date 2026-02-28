@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { listPublicEvents } from "../supabase/events";
 import EventCard from "../components/EventCard";
+import EventsMapView from "../components/EventsMapView";
 import styles from "./HomePage.module.css";
 import PublicTopBar from "../components/PublicTopBar";
 import { useAuth } from "../auth/useAuth";
@@ -106,10 +107,16 @@ export default function HomePage() {
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  /* 🔽 filtro */
+  /* filtro de categoria */
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  /* 🔽 paginação */
+  /* ordenação: "upcoming" = mais próximo primeiro (padrão) | "recent" = mais novo */
+  const [sortMode, setSortMode] = useState("upcoming");
+
+  /* visualização: "list" | "map" */
+  const [viewMode, setViewMode] = useState("list");
+
+  /* paginação do scroll infinito */
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loadMoreRef = useRef(null);
 
@@ -125,26 +132,32 @@ export default function HomePage() {
     load();
   }, []);
 
-  /* 🔽 filtro */
+  /* filtro de categoria */
   const filteredEvents =
-  selectedCategory === "all"
-    ? events.filter(isEventStillVisible)
-    : events.filter(
-        (ev) =>
-          (String(ev.category || "").trim().toLowerCase() === String(selectedCategory).trim().toLowerCase()) &&
-          isEventStillVisible(ev)
-      );
+    selectedCategory === "all"
+      ? events.filter(isEventStillVisible)
+      : events.filter(
+          (ev) =>
+            String(ev.category || "").trim().toLowerCase() ===
+              String(selectedCategory).trim().toLowerCase() &&
+            isEventStillVisible(ev)
+        );
 
+  /* ordenação */
+  const sortedEvents =
+    sortMode === "recent"
+      ? [...filteredEvents].sort(
+          (a, b) => new Date(b.created_at) - new Date(a.created_at)
+        )
+      : filteredEvents; // já vem ASC por event_local_at do DB (mais próximo primeiro)
 
-      /* 🔽 resetar scroll infinito ao trocar filtro */
-      useEffect(() => {
-        setVisibleCount(PAGE_SIZE);
-      }, [selectedCategory]);
+  /* resetar scroll infinito ao trocar filtro ou sort */
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selectedCategory, sortMode]);
 
-
-
-  /* 🔽 eventos visíveis */
-  const visibleEvents = filteredEvents.slice(0, visibleCount);
+  /* eventos visíveis (paginados) */
+  const visibleEvents = sortedEvents.slice(0, visibleCount);
 
 
   /* 🔽 infinite scroll */
@@ -167,7 +180,7 @@ export default function HomePage() {
 
     observer.observe(loadMoreRef.current);
     return () => observer.disconnect();
-  }, [filteredEvents]);
+  }, [sortedEvents]);
 
   return (
     <div className={styles.container}>
@@ -189,47 +202,82 @@ export default function HomePage() {
         )}
 
         {!loading && events.length > 0 && (
-          <div className={styles.categoryFilter}>
-            <button onClick={() => setSelectedCategory("all")}>All</button>
-            <button onClick={() => setSelectedCategory("party")}>Party</button>
-            <button onClick={() => setSelectedCategory("show")}>Show</button>
-            <button onClick={() => setSelectedCategory("birthday")}>
-              Birthday
-            </button>
-            <button onClick={() => setSelectedCategory("class")}>
-              Classes
-            </button>
-            <button onClick={() => setSelectedCategory("workshop")}>
-              Workshop
-            </button>
-            <button onClick={() => setSelectedCategory("sport")}>
-              Sports
-            </button>
-            <button onClick={() => setSelectedCategory("art")}>Art</button>
-            <button onClick={() => setSelectedCategory("culture")}>
-              Culture
-            </button>
-            <button onClick={() => setSelectedCategory("teather")}>
-              Theater
-            </button>
+          <>
+            {/* Filtros de categoria */}
+            <div className={styles.categoryFilter}>
+              <button onClick={() => setSelectedCategory("all")}>All</button>
+              <button onClick={() => setSelectedCategory("party")}>Party</button>
+              <button onClick={() => setSelectedCategory("show")}>Show</button>
+              <button onClick={() => setSelectedCategory("birthday")}>Birthday</button>
+              <button onClick={() => setSelectedCategory("class")}>Classes</button>
+              <button onClick={() => setSelectedCategory("workshop")}>Workshop</button>
+              <button onClick={() => setSelectedCategory("sport")}>Sports</button>
+              <button onClick={() => setSelectedCategory("art")}>Art</button>
+              <button onClick={() => setSelectedCategory("culture")}>Culture</button>
+              <button onClick={() => setSelectedCategory("teather")}>Theater</button>
+            </div>
+
+            {/* Controles: ordenação + toggle de visualização */}
+            <div className={styles.controlsRow}>
+              {/* Sort */}
+              <div className={styles.sortToggle}>
+                <button
+                  className={sortMode === "upcoming" ? styles.sortBtnActive : styles.sortBtn}
+                  onClick={() => setSortMode("upcoming")}
+                >
+                  📅 Upcoming
+                </button>
+                <button
+                  className={sortMode === "recent" ? styles.sortBtnActive : styles.sortBtn}
+                  onClick={() => setSortMode("recent")}
+                >
+                  🆕 New
+                </button>
+              </div>
+
+              {/* View toggle */}
+              <div className={styles.viewToggle}>
+                <button
+                  className={viewMode === "list" ? styles.viewBtnActive : styles.viewBtn}
+                  onClick={() => setViewMode("list")}
+                  title="List view"
+                >
+                  ☰
+                </button>
+                <button
+                  className={viewMode === "map" ? styles.viewBtnActive : styles.viewBtn}
+                  onClick={() => setViewMode("map")}
+                  title="Map view"
+                >
+                  🗺
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Map view */}
+        {!loading && viewMode === "map" && (
+          <EventsMapView events={sortedEvents.map(normalizeEvent)} />
+        )}
+
+        {/* List view */}
+        {viewMode === "list" && (
+          <div className={styles.list}>
+            {visibleEvents.map((ev, index) => (
+              <div
+                key={ev.id}
+                className={styles.cardWrapper}
+                style={{ animationDelay: `${index * 60}ms` }}
+              >
+                <EventCard event={normalizeEvent(ev)} />
+              </div>
+            ))}
           </div>
         )}
 
-        <div className={styles.list}>
-          {visibleEvents.map((ev, index) => (
-            <div
-              key={ev.id}
-              className={styles.cardWrapper}
-              style={{ animationDelay: `${index * 60}ms` }}
-            >
-              {/* 🔽 ÚNICA MUDANÇA AQUI */}
-              <EventCard event={normalizeEvent(ev)} />
-            </div>
-          ))}
-        </div>
-
-        {/* 🔽 sentinel do infinite scroll */}
-        {visibleCount < filteredEvents.length && (
+        {/* Sentinel do infinite scroll (só no modo lista) */}
+        {viewMode === "list" && visibleCount < sortedEvents.length && (
           <div ref={loadMoreRef} className={styles.loadMore} />
         )}
       </div>

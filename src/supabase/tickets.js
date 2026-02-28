@@ -119,22 +119,37 @@ export async function generateTicket({
   if (eventError || !event) return { error: new Error("Event not found") };
   if (event.creator_id !== user.id) return { error: new Error("Not authorized") };
 
+  // Fetch a ticket_type_id for this event (required if column is NOT NULL)
+  const { data: ticketType } = await supabase
+    .from("ticket_types")
+    .select("id")
+    .eq("event_id", eventId)
+    .limit(1)
+    .maybeSingle();
+
   const code = generateTicketCode();
+
+  const insertPayload = {
+    event_id:         eventId,
+    user_id:          null,
+    qr_code:          code,
+    name:             attendeeName,
+    status:           "active",
+    payment_provider: "generated",
+  };
+
+  // Include ticket_type_id only if a ticket type exists for this event
+  if (ticketType?.id) {
+    insertPayload.ticket_type_id = ticketType.id;
+  }
 
   const { data: ticket, error } = await supabase
     .from("tickets")
-    .insert({
-      event_id:         eventId,
-      user_id:          null,
-      qr_code:          code,
-      name:             attendeeName,
-      status:           "active",
-      payment_provider: "generated",
-    })
+    .insert(insertPayload)
     .select()
     .single();
 
-  return { data: ticket ? { ticket } : null, error };
+  return { data: ticket ? { ...ticket } : null, error };
 }
 
 // ─────────────────────────────────────────────

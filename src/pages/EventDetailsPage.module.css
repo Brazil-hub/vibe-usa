@@ -660,6 +660,43 @@
   outline-offset: 2px;
 }
 
+/* Toggle row: holds the Comments button + pending badge / refresh button */
+.commentsToggleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+/* Organizer badge: "X pending" shown on the closed Comments button */
+.pendingCountBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  background: rgba(251, 191, 36, 0.25);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 999px;
+  padding: 2px 8px;
+  cursor: default;
+}
+
+/* Refresh ↻ button for organizer */
+.refreshButton {
+  font-size: 15px;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, transform 0.2s;
+}
+.refreshButton:hover {
+  color: #ff4fa3;
+  transform: rotate(30deg);
+}
+
 /* Pending comment — subtle amber tint so it's visually distinct */
 .commentPending {
   opacity: 0.85;

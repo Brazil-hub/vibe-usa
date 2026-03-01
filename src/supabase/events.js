@@ -39,16 +39,13 @@ export async function getEventById(id) {
 //
 
 export async function listPublicEvents() {
-  // Fetch approved events from the last 48h onward.
-  // Client-side isEventStillVisible applies the "1 AM next day" expiry rule.
-  const since = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-
+  // Uses the public_events_feed VIEW which handles RLS, timezone
+  // normalisation and approved-status filtering correctly.
+  // The client-side isEventStillVisible then applies the "1 AM next day" rule.
   const { data, error } = await supabase
-    .from("events")
+    .from("public_events_feed")
     .select("*")
-    .eq("status", "approved")
-    .gte("event_date", since)
-    .order("event_date", { ascending: true });
+    .order("event_local_at", { ascending: true });
 
   return { data, error };
 }

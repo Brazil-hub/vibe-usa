@@ -24,7 +24,6 @@ function readCache() {
   try { return JSON.parse(sessionStorage.getItem(GEO_CACHE_KEY) || "{}"); }
   catch { return {}; }
 }
-
 function writeCache(cache) {
   try { sessionStorage.setItem(GEO_CACHE_KEY, JSON.stringify(cache)); }
   catch {}
@@ -33,11 +32,24 @@ function writeCache(cache) {
 const DEFAULT_CENTER = [37.7599, -122.4148]; // Mission District, San Francisco
 const DEFAULT_ZOOM   = 13;
 
+/**
+ * Build the best possible Nominatim query from an event.
+ * Falls back to "San Francisco, CA" as city context if none stored.
+ */
+function buildGeoQuery(ev) {
+  const place = ev.venue_name || ev.location || "";
+  // Use stored city if available, otherwise default to SF
+  const city  = ev.city && ev.city.trim() ? ev.city.trim() : "San Francisco, CA";
+  const parts = [place, city].filter(Boolean);
+  return parts.join(", ");
+}
+
 export default function EventsMapView({ events }) {
-  const [plotted, setPlotted] = useState([]);
-  const queueRef      = useRef([]);
-  const processingRef = useRef(false);
-  const navigate      = useNavigate();
+  const [plotted,       setPlotted]       = useState([]);
+  const [pendingCount,  setPendingCount]  = useState(0);
+  const queueRef        = useRef([]);
+  const processingRef   = useRef(false);
+  const navigate        = useNavigate();
 
   useEffect(() => {
     const cache     = readCache();
@@ -51,11 +63,12 @@ export default function EventsMapView({ events }) {
         return;
       }
 
-      // Events without coords — check sessionStorage cache first
-      const query = [ev.venue_name || ev.location, ev.city].filter(Boolean).join(", ");
-      if (!query) return;
+      // Build geocoding query; skip events with no usable location text
+      const query    = buildGeoQuery(ev);
+      const cacheKey = query.toLowerCase().trim();
 
-      const cacheKey = query.toLowerCase();
+      if (!cacheKey || cacheKey.length < 4) return; // nothing to geocode
+
       if (cache[cacheKey]) {
         immediate.push({ ...ev, resolvedLat: cache[cacheKey].lat, resolvedLng: cache[cacheKey].lng });
       } else {
@@ -64,10 +77,12 @@ export default function EventsMapView({ events }) {
     });
 
     setPlotted(immediate);
+    setPendingCount(toGeocode.length);
 
     if (toGeocode.length === 0) return;
     queueRef.current = toGeocode;
     if (!processingRef.current) processQueue(cache);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [events]);
 
   async function processQueue(cache) {
@@ -87,7 +102,9 @@ export default function EventsMapView({ events }) {
         }
       } catch { /* silent */ }
 
-      // Respect Nominatim 1 req/sec rate limit
+      setPendingCount(queueRef.current.length);
+
+      // Nominatim rate limit: 1 req/sec
       if (queueRef.current.length > 0) {
         await new Promise((r) => setTimeout(r, 1150));
       }
@@ -96,7 +113,7 @@ export default function EventsMapView({ events }) {
     processingRef.current = false;
   }
 
-  // Center on average of all plotted events, or default to Mission District
+  // Center on average of all plotted events, fallback to Mission District
   const center =
     plotted.length > 0
       ? [
@@ -129,7 +146,7 @@ export default function EventsMapView({ events }) {
               click: () => navigate(`/event/${ev.id}`),
             }}
           >
-            {/* Tooltip aparece no hover (desktop) — mostra resumo rápido */}
+            {/* Tooltip on hover — quick preview before navigating */}
             <Tooltip direction="top" offset={[0, -2]} opacity={1}>
               <div className={styles.tooltip}>
                 <strong className={styles.tooltipTitle}>{ev.title}</strong>
@@ -141,7 +158,7 @@ export default function EventsMapView({ events }) {
                 )}
                 {(ev.venue_name || ev.city) && (
                   <span className={styles.tooltipLocation}>
-                    📍 {[ev.venue_name, ev.city].filter(Boolean).join(", ")}
+                    {[ev.venue_name, ev.city].filter(Boolean).join(", ")}
                   </span>
                 )}
                 <span className={styles.tooltipCta}>Tap to view →</span>
@@ -151,11 +168,24 @@ export default function EventsMapView({ events }) {
         ))}
       </MapContainer>
 
-      {plotted.length === 0 && events.length > 0 && (
-        <div className={styles.empty}>Locating events on the map…</div>
+      {/* Geocoding progress pill */}
+      {pendingCount > 0 && (
+        <div className={styles.geocodingPill}>
+          <span className={styles.geocodingDot} />
+          Locating {pendingCount} event{pendingCount !== 1 ? "s" : ""}…
+        </div>
       )}
+
+      {/* No events at all */}
       {events.length === 0 && (
         <div className={styles.empty}>No events to show on the map.</div>
+      )}
+
+      {/* Events exist but none could be located */}
+      {events.length > 0 && plotted.length === 0 && pendingCount === 0 && (
+        <div className={styles.empty}>
+          No location data found for current events.
+        </div>
       )}
     </div>
   );

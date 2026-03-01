@@ -65,40 +65,23 @@ function normalizeEvent(ev) {
   };
 }
 
+/**
+ * Evento permanece visível até 1h da manhã do DIA SEGUINTE ao evento.
+ * Ex: evento na Sexta 22h → some do feed no Sábado às 01h00.
+ */
 function isEventStillVisible(ev) {
   if (!ev.event_date) return false;
-
-  // data do evento (UTC → Date)
   const eventDate = new Date(ev.event_date);
-
-  // agora (local)
-  const now = new Date();
-
-  // fim do dia local de hoje (23:59:00)
-  const endOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
-    23,
-    59,
-    0,
-    0
+  // Meia-noite do dia do evento (horário local do browser)
+  const eventMidnight = new Date(
+    eventDate.getFullYear(),
+    eventDate.getMonth(),
+    eventDate.getDate(),
+    0, 0, 0, 0
   );
-
-  // evento é visível se:
-  // - é hoje (local) OU
-  // - é no futuro
-  return eventDate <= endOfToday
-    ? eventDate >= new Date(
-        now.getFullYear(),
-        now.getMonth(),
-        now.getDate(),
-        0,
-        0,
-        0,
-        0
-      )
-    : true;
+  // Expira às 01h do dia seguinte = meia-noite + 25 horas
+  const expiresAt = new Date(eventMidnight.getTime() + 25 * 60 * 60 * 1000);
+  return expiresAt > new Date();
 }
 
 
@@ -256,9 +239,9 @@ export default function HomePage() {
           </>
         )}
 
-        {/* Map view */}
+        {/* Map view — mostra TODOS eventos não-expirados (ignora filtro de categoria) */}
         {!loading && viewMode === "map" && (
-          <EventsMapView events={sortedEvents.map(normalizeEvent)} />
+          <EventsMapView events={events.filter(isEventStillVisible).map(normalizeEvent)} />
         )}
 
         {/* List view */}

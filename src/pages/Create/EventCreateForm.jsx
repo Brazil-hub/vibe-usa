@@ -14,10 +14,16 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 
+/**
+ * Converts any date value (ISO UTC string, Date, etc.) to the
+ * "YYYY-MM-DDTHH:MM" format that <input type="datetime-local"> expects,
+ * using the browser's LOCAL timezone — so the user always sees/edits
+ * their local time regardless of how the value is stored in the DB.
+ */
 function toDatetimeLocal(value) {
   if (!value) return "";
-  if (typeof value === "string" && value.includes("T")) return value.slice(0, 16);
   const date = new Date(value);
+  if (isNaN(date.getTime())) return "";
   const pad = (n) => String(n).padStart(2, "0");
   return (
     date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) +
@@ -129,11 +135,17 @@ export default function EventCreateForm() {
     if (resolvedEventFormat === "online"    && !onlineUrl)     return showToast("Link is required.");
     if (resolvedIsPaid && (!price || Number(price) <= 0))      return showToast("Invalid price.");
 
+    // Convert the datetime-local string (local time, no TZ) to a proper UTC
+    // ISO string so PostgreSQL stores the right moment in time.
+    // new Date("2026-03-04T17:30") in the browser → local time → toISOString()
+    // → UTC offset applied → feed + edit form both show the same local time.
+    const eventDateUTC = new Date(eventDate).toISOString();
+
     const draft = {
       event_id:     state?.event_id ?? state?.id ?? null,
       title,
       description,
-      event_date:   eventDate,
+      event_date:   eventDateUTC,
       category,
       location:     locationField,
       lat:          lat,

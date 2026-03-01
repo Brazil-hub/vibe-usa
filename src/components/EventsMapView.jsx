@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { geocodeAddress } from "../lib/geocoding";
@@ -34,14 +34,42 @@ const DEFAULT_ZOOM   = 13;
 
 /**
  * Build the best possible Nominatim query from an event.
- * Falls back to "San Francisco, CA" as city context if none stored.
+ * After normalizeEvent(), the address lives in venue_name (= ev.location).
+ * Falls back through all available address fields before using city context.
  */
 function buildGeoQuery(ev) {
-  const place = ev.venue_name || ev.location || "";
-  // Use stored city if available, otherwise default to SF
-  const city  = ev.city && ev.city.trim() ? ev.city.trim() : "San Francisco, CA";
-  const parts = [place, city].filter(Boolean);
-  return parts.join(", ");
+  // venue_name is set by normalizeEvent(); location is the raw DB field.
+  // We check both so this works whether or not normalizeEvent was called.
+  const place = (ev.venue_name || ev.location || "").trim();
+  const city  = ev.city && ev.city.trim() ? ev.city.trim() : "";
+  // Build query: prefer "place, city" but use place alone if city is empty
+  if (place && city) return `${place}, ${city}`;
+  if (place)         return place;
+  if (city)          return city;
+  return "";
+}
+
+/**
+ * Fits the map viewport to show all plotted pins.
+ * Fires once when the first batch of pins arrives; never re-fires.
+ */
+function MapAutoFit({ plotted }) {
+  const map    = useMap();
+  const fitted = useRef(false);
+
+  useEffect(() => {
+    if (fitted.current || plotted.length === 0) return;
+    fitted.current = true;
+
+    const coords = plotted.map((e) => [e.resolvedLat, e.resolvedLng]);
+    if (coords.length === 1) {
+      map.setView(coords[0], 14);
+    } else {
+      map.fitBounds(coords, { padding: [48, 48], maxZoom: 14 });
+    }
+  }, [plotted, map]);
+
+  return null;
 }
 
 export default function EventsMapView({ events }) {
@@ -67,7 +95,7 @@ export default function EventsMapView({ events }) {
       const query    = buildGeoQuery(ev);
       const cacheKey = query.toLowerCase().trim();
 
-      if (!cacheKey || cacheKey.length < 4) return; // nothing to geocode
+      if (!cacheKey || cacheKey.length < 3) return; // nothing to geocode
 
       if (cache[cacheKey]) {
         immediate.push({ ...ev, resolvedLat: cache[cacheKey].lat, resolvedLng: cache[cacheKey].lng });
@@ -136,6 +164,9 @@ export default function EventsMapView({ events }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
         />
+
+        {/* Auto-fit the viewport when pins first arrive */}
+        <MapAutoFit plotted={plotted} />
 
         {plotted.map((ev) => (
           <Marker

@@ -97,6 +97,7 @@ export default function EventPostComments({
             <EventPostAddComment
               postId={postId}
               onComment={loadComments}
+              isOrganizer={isOrganizer}
             />
           )}
 

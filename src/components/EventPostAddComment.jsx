@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../supabase/client";
+import { useToast } from "../hooks/useToast";
 import styles from "../pages/EventDetailsPage.module.css";
 
 /**
@@ -56,10 +57,11 @@ async function compressForComment(file) {
   return new File([blob], `${safeName}.jpg`, { type: "image/jpeg" });
 }
 
-export default function EventPostAddComment({ postId, onComment }) {
+export default function EventPostAddComment({ postId, onComment, isOrganizer }) {
   const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [sending, setSending] = useState(false);
+  const { showToast, ToastComponent } = useToast();
 
   async function handleImageChange(e) {
     const file = e.target.files?.[0];
@@ -117,26 +119,38 @@ export default function EventPostAddComment({ postId, onComment }) {
       }
     }
 
+    // Non-organizers submit as "pending" so the organizer can moderate.
+    // Organizers post directly as "approved".
+    const status = isOrganizer ? "approved" : "pending";
+
     const { error } = await supabase.from("comments").insert({
       post_id: postId,
       user_id: user.id,
       text,
       image_url,
-      status: "approved",
+      status,
     });
 
     if (error) {
       console.error("Error posting comment:", error);
+      showToast("Failed to send comment. Try again.");
     } else {
       setText("");
       setImageFile(null);
       onComment && onComment();
+      if (isOrganizer) {
+        showToast("Comment posted ✅");
+      } else {
+        showToast("Comment sent for review ✅");
+      }
     }
 
     setSending(false);
   }
 
   return (
+    <>
+    {ToastComponent}
     <div className={styles.commentComposer}>
       <input
         className={styles.commentInput}
@@ -163,5 +177,6 @@ export default function EventPostAddComment({ postId, onComment }) {
         Send
       </button>
     </div>
+    </>
   );
 }

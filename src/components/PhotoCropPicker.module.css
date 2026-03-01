@@ -1,0 +1,194 @@
+/* PhotoCropPicker.module.css */
+
+/* ─── Pick mode ──────────────────────────────────────────── */
+.pickLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 2px dashed rgba(255, 63, 142, 0.35);
+  border-radius: 14px;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 14px;
+  font-weight: 500;
+  transition: background 0.15s, border-color 0.15s;
+  box-sizing: border-box;
+}
+
+.pickLabel:hover {
+  background: rgba(255, 63, 142, 0.04);
+  border-color: rgba(255, 63, 142, 0.55);
+}
+
+.pickIcon {
+  font-size: 32px;
+  line-height: 1;
+}
+
+.pickText {
+  color: #6b7280;
+}
+
+/* ─── Crop mode ──────────────────────────────────────────── */
+.cropWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cropArea {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: #111;
+  border-radius: 14px;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.cropImg {
+  position: absolute;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* Rule-of-thirds grid (subtle) */
+.gridOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.13) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.13) 1px, transparent 1px);
+  background-size: 33.333% 33.333%;
+  border-radius: 14px;
+}
+
+.cropActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+/* ─── Done / preview mode ────────────────────────────────── */
+.doneWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.previewWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1.5px solid rgba(255, 63, 142, 0.2);
+}
+
+.previewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.previewBadge {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.doneActions {
+  display: flex;
+  gap: 8px;
+}
+
+/* ─── Shared buttons ─────────────────────────────────────── */
+.hidden {
+  display: none;
+}
+
+/* "Change" / "Change photo" button */
+.changeBtn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  color: #374151;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.changeBtn:hover {
+  background: #f9f5f7;
+}
+
+/* "✓ Use this" primary button */
+.useCropBtn {
+  flex: 2;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: none;
+  background: #ff3f8e;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+
+.useCropBtn:hover {
+  opacity: 0.88;
+}
+
+/* "✎ Recrop" outlined-pink button */
+.recropBtn {
+  flex: 1;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 63, 142, 0.4);
+  background: rgba(255, 63, 142, 0.06);
+  color: #ff3f8e;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.recropBtn:hover {
+  background: rgba(255, 63, 142, 0.12);
+}
+
+/* Hint text */
+.cropHint {
+  font-size: 11px;
+  color: #9ca3af;
+  text-align: center;
+  margin: 6px 0 0;
+}

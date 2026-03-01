@@ -82,6 +82,39 @@
   border: 1px solid #ddd;
 }
 
+/* ── Cover photo preview (after crop is confirmed) ── */
+.coverPreviewWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coverThumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.changeCoverBtn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 63, 142, 0.4);
+  background: rgba(255, 63, 142, 0.06);
+  color: #ff3f8e;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.changeCoverBtn:hover {
+  background: rgba(255, 63, 142, 0.12);
+}
+
 .fileLabel {
   display: flex;
   justify-content: center;

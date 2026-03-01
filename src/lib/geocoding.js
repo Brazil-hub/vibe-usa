@@ -34,6 +34,33 @@ export async function geocodeAddress(query) {
 }
 
 /**
+ * Place search: query string → array of { lat, lng, display_name, short_name }
+ * Returns up to `limit` results. Callers must debounce (Nominatim rate limit).
+ */
+export async function searchPlaces(query, limit = 5) {
+  if (!query || query.trim().length < 3) return [];
+
+  const url = new URL(`${BASE}/search`);
+  url.searchParams.set("q", query.trim());
+  url.searchParams.set("format", "jsonv2");
+  url.searchParams.set("limit", String(limit));
+
+  try {
+    const res = await fetch(url.toString(), { headers: HEADERS });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.map((item) => ({
+      lat: parseFloat(item.lat),
+      lng: parseFloat(item.lon),
+      display_name: item.display_name,
+      short_name: item.name || item.display_name.split(",")[0].trim(),
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Reverse geocode: { lat, lng } → address string
  * Returns null on failure.
  */

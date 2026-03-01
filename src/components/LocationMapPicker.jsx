@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { geocodeAddress, reverseGeocode } from "../lib/geocoding";
+import { searchPlaces, reverseGeocode } from "../lib/geocoding";
 import styles from "./LocationMapPicker.module.css";
 
 // Pink SVG pin — no PNG files, no Vite asset issues
@@ -40,32 +40,42 @@ function MapClickHandler({ onMapClick }) {
 
 export default function LocationMapPicker({ value, onChange }) {
   const [inputValue, setInputValue] = useState(value || "");
-  const [position, setPosition] = useState(null);   // { lat, lng }
+  const [position, setPosition]     = useState(null);
   const [isGeocoding, setIsGeocoding] = useState(false);
-  const [showMap, setShowMap] = useState(false);
+  const [showMap, setShowMap]       = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
   const debounceRef = useRef(null);
 
-  // Debounced forward geocode as user types
+  // Debounced search as user types — returns multiple suggestions
   const handleInputChange = useCallback(
     (e) => {
       const val = e.target.value;
       setInputValue(val);
       onChange(val, null, null); // propagate text immediately, clear coords
+      setSuggestions([]);
 
       clearTimeout(debounceRef.current);
-      if (val.trim().length < 5) return;
+      if (val.trim().length < 3) return;
 
       debounceRef.current = setTimeout(async () => {
         setIsGeocoding(true);
-        const result = await geocodeAddress(val);
+        const results = await searchPlaces(val);
         setIsGeocoding(false);
-        if (result) {
-          const pos = { lat: result.lat, lng: result.lng };
-          setPosition(pos);
-          setShowMap(true);
-          onChange(val, result.lat, result.lng);
-        }
-      }, 700);
+        setSuggestions(results);
+      }, 600);
+    },
+    [onChange]
+  );
+
+  // User picks a suggestion from dropdown
+  const handleSelect = useCallback(
+    (suggestion) => {
+      setSuggestions([]);
+      const pos = { lat: suggestion.lat, lng: suggestion.lng };
+      setInputValue(suggestion.display_name);
+      setPosition(pos);
+      setShowMap(true);
+      onChange(suggestion.display_name, suggestion.lat, suggestion.lng);
     },
     [onChange]
   );
@@ -101,21 +111,47 @@ export default function LocationMapPicker({ value, onChange }) {
 
   return (
     <div className={styles.wrapper}>
-      <div className={styles.inputRow}>
-        <input
-          className={styles.input}
-          placeholder="Address"
-          value={inputValue}
-          onChange={handleInputChange}
-        />
-        {isGeocoding && <span className={styles.spinner} />}
+      {/* Input + autocomplete dropdown */}
+      <div className={styles.inputContainer}>
+        <div className={styles.inputRow}>
+          <input
+            className={styles.input}
+            placeholder="Venue or address"
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyDown={(e) => { if (e.key === "Escape") setSuggestions([]); }}
+          />
+          {isGeocoding && <span className={styles.spinner} />}
+        </div>
+
+        {suggestions.length > 0 && (
+          <ul className={styles.dropdown}>
+            {suggestions.map((s, i) => {
+              const parts = s.display_name.split(",");
+              const name  = s.short_name || parts[0].trim();
+              const addr  = parts.slice(1, 3).join(",").trim();
+              return (
+                <li
+                  key={i}
+                  className={styles.suggestion}
+                  // onMouseDown fires before input onBlur, so click registers
+                  onMouseDown={() => handleSelect(s)}
+                >
+                  <span className={styles.suggestionName}>{name}</span>
+                  {addr && <span className={styles.suggestionAddr}>{addr}</span>}
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
+      {/* Map preview */}
       {showMap && (
         <div className={styles.mapWrap}>
           <MapContainer
-            center={position ? [position.lat, position.lng] : [39.5, -98.35]}
-            zoom={position ? 15 : 4}
+            center={position ? [position.lat, position.lng] : [37.7599, -122.4148]}
+            zoom={position ? 15 : 14}
             className={styles.map}
             zoomControl={true}
           >

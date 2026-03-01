@@ -8,6 +8,7 @@ import { useToast } from "../../hooks/useToast";
 import { DRAFT_SESSION_KEY } from "../../constants";
 import { draftFileStore } from "./draftFileStore";
 import LocationMapPicker from "../../components/LocationMapPicker";
+import PhotoCropPicker from "../../components/PhotoCropPicker";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -24,30 +25,6 @@ function toDatetimeLocal(value) {
   );
 }
 
-async function resizeAndCompressImage(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = (e) => { img.src = e.target.result; };
-    img.onload = () => {
-      const MAX_SIZE = 1200;
-      let { width, height } = img;
-      if (width > height && width > MAX_SIZE) {
-        height = Math.round((height * MAX_SIZE) / width); width = MAX_SIZE;
-      } else if (height > MAX_SIZE) {
-        width = Math.round((width * MAX_SIZE) / height); height = MAX_SIZE;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width; canvas.height = height;
-      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() })),
-        "image/jpeg", 0.75
-      );
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function EventCreateForm() {
   const { state } = useLocation();
@@ -67,6 +44,7 @@ export default function EventCreateForm() {
   const [onlineUrl, setOnlineUrl] = useState("");
   const [price, setPrice] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [showCropPicker, setShowCropPicker] = useState(false);
 
   // ── Resolved meta values (nav state → sessionStorage → safe fallback) ──
   const storedDraft = (() => {
@@ -126,15 +104,6 @@ export default function EventCreateForm() {
     editorSynced.current = true;
     editor.commands.setContent(description);
   }, [editor, description]);
-
-  // ── Image picker ────────────────────────────────────────────────────────
-  async function handleFileChange(e) {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    const optimized = await resizeAndCompressImage(selected);
-    draftFileStore.set(optimized);                // kept in memory for publish
-    setPreviewUrl(URL.createObjectURL(optimized)); // blob URL for immediate preview
-  }
 
   // ── Navigate to review ──────────────────────────────────────────────────
   // Image is NOT uploaded here — the blob URL travels with the draft and the
@@ -261,19 +230,27 @@ export default function EventCreateForm() {
       )}
 
       <div className={styles.card}>
-        <label className={styles.fileLabel}>
-          {previewUrl ? (
-            <img src={previewUrl} className={styles.preview} alt="preview" />
-          ) : (
-            "Choose a cover image"
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className={styles.fileInput}
+        {/* ── Cover image: thumbnail + swap, OR full crop picker ── */}
+        {previewUrl && !showCropPicker ? (
+          <div className={styles.coverPreviewWrap}>
+            <img src={previewUrl} className={styles.coverThumb} alt="cover" />
+            <button
+              type="button"
+              className={styles.changeCoverBtn}
+              onClick={() => setShowCropPicker(true)}
+            >
+              ✎ Change / Recrop
+            </button>
+          </div>
+        ) : (
+          <PhotoCropPicker
+            onCrop={(blob, url) => {
+              draftFileStore.set(blob);
+              setPreviewUrl(url);
+              setShowCropPicker(false);
+            }}
           />
-        </label>
+        )}
       </div>
 
       <Button onClick={goToReview}>Review Event</Button>

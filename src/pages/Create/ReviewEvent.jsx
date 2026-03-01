@@ -199,8 +199,12 @@ export default function ReviewEvent() {
     <div className={styles.container}>
       {/* ── Step header ── */}
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Create Event</div>
-        <div className={styles.processStep}>Step 5 of 5 · Review</div>
+        <div className={styles.processTitle}>
+          {state?.event_id ? "Edit Event" : "Create Event"}
+        </div>
+        <div className={styles.processStep}>
+          {state?.event_id ? "Review Changes" : "Step 5 of 5 · Review"}
+        </div>
       </div>
 
       {/* ── Preview label ── */}

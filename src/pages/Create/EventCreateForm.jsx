@@ -57,11 +57,19 @@ export default function EventCreateForm() {
 
   // ── Load draft ──────────────────────────────────────────────────────────
   useEffect(() => {
-    let source = state;
-    if (!source) {
-      try { const r = sessionStorage.getItem(DRAFT_SESSION_KEY); if (r) source = JSON.parse(r); }
-      catch {}
-    }
+    // 1. Always try sessionStorage first — it has the full event object when
+    //    coming from handleEditEvent (dashboard edit).
+    let source = null;
+    try {
+      const r = sessionStorage.getItem(DRAFT_SESSION_KEY);
+      if (r) source = JSON.parse(r);
+    } catch {}
+
+    // 2. Merge nav state on top (higher priority for its own fields).
+    //    When editing from dashboard, nav state is { id, fromDashboardEdit }
+    //    with no form fields — so sessionStorage data wins for those.
+    if (state) source = source ? { ...source, ...state } : state;
+
     if (!source) return;
 
     setTitle(source.title || "");
@@ -122,7 +130,7 @@ export default function EventCreateForm() {
     if (resolvedIsPaid && (!price || Number(price) <= 0))      return showToast("Invalid price.");
 
     const draft = {
-      event_id:     state?.event_id ?? null,
+      event_id:     state?.event_id ?? state?.id ?? null,
       title,
       description,
       event_date:   eventDate,
@@ -147,8 +155,12 @@ export default function EventCreateForm() {
   return (
     <div className={styles.container}>
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Create Event</div>
-        <div className={styles.processStep}>Step 4 of 5 · Details</div>
+        <div className={styles.processTitle}>
+          {state?.fromDashboardEdit ? "Edit Event" : "Create Event"}
+        </div>
+        <div className={styles.processStep}>
+          {state?.fromDashboardEdit ? "Edit Details" : "Step 4 of 5 · Details"}
+        </div>
       </div>
 
       <h2 className={styles.title}>Event Details</h2>
@@ -253,7 +265,9 @@ export default function EventCreateForm() {
         )}
       </div>
 
-      <Button onClick={goToReview}>Review Event</Button>
+      <Button onClick={goToReview}>
+        {state?.fromDashboardEdit ? "Review Changes" : "Review Event"}
+      </Button>
 
       {ToastComponent}
     </div>

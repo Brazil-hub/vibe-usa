@@ -13,9 +13,9 @@ export default function EventPostComments({
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentUserId, setCurrentUserId] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
 
-  // Get the current user id once so we can show the commenter
-  // their own pending comment (labelled "pending review")
+  // Get current user id once
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) setCurrentUserId(user.id);
@@ -25,7 +25,7 @@ export default function EventPostComments({
   async function loadComments() {
     setLoading(true);
 
-    let query = supabase
+    const { data, error } = await supabase
       .from("comments")
       .select(
         `
@@ -45,34 +45,31 @@ export default function EventPostComments({
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
 
-    // Organizers see ALL comments (pending + approved) for moderation.
-    // Non-organizers see approved comments + their OWN pending ones.
-    // The DB-level RLS (see migration 20260301_comments_moderation_rls.sql)
-    // enforces the same rule, so this JS filter just avoids fetching
-    // rows we'd discard anyway.
-    if (!isOrganizer) {
-      // RLS will return: approved OR (pending AND user_id = auth.uid())
-      // No extra filter needed here — the DB handles it.
-      // We keep the query as-is and let RLS do its job.
-    }
-
-    const { data, error } = await query;
-
     if (error) {
       console.error("Error loading comments:", error);
       setComments([]);
     } else {
-      setComments(data || []);
+      const rows = data || [];
+      setComments(rows);
+      // Count pending for the organizer badge
+      setPendingCount(rows.filter((c) => c.status === "pending").length);
     }
 
     setLoading(false);
   }
 
+  // Reload when the section opens, when isOrganizer is confirmed,
+  // or when postId changes.
   useEffect(() => {
-    if (open) {
-      loadComments();
-    }
-  }, [open, postId]);
+    if (open) loadComments();
+  }, [open, postId, isOrganizer]);
+
+  // Poll for new pending comments while the section is open (organizer only)
+  useEffect(() => {
+    if (!isOrganizer || !open) return;
+    const interval = setInterval(loadComments, 15000); // every 15 s
+    return () => clearInterval(interval);
+  }, [isOrganizer, open, postId]);
 
   async function handleApprove(id) {
     const { error } = await supabase
@@ -100,18 +97,32 @@ export default function EventPostComments({
 
   return (
     <div className={styles.commentsContainer}>
-      <button
-        className={styles.commentsToggle}
-        onClick={() => {
-          const next = !open;
-          setOpen(next);
-          // Re-fetch every time the section is opened so the organizer
-          // always sees the latest pending comments without a page reload.
-          if (next) loadComments();
-        }}
-      >
-        {open ? "Hide comments" : "Comments"}
-      </button>
+      <div className={styles.commentsToggleRow}>
+        <button
+          className={styles.commentsToggle}
+          onClick={() => setOpen((prev) => !prev)}
+        >
+          {open ? "Hide comments" : "Comments"}
+        </button>
+
+        {/* Badge showing pending count to organizer even when section is closed */}
+        {isOrganizer && pendingCount > 0 && !open && (
+          <span className={styles.pendingCountBadge}>
+            {pendingCount} pending
+          </span>
+        )}
+
+        {/* Refresh button for organizer when section is open */}
+        {isOrganizer && open && (
+          <button
+            className={styles.refreshButton}
+            onClick={loadComments}
+            title="Refresh comments"
+          >
+            ↻
+          </button>
+        )}
+      </div>
 
       {open && (
         <>
@@ -167,25 +178,20 @@ export default function EventPostComments({
                         {user.name || "User"}
                       </span>
                       <span className={styles.commentDate}>
-                        {new Date(comment.created_at).toLocaleString(
-                          "en-US",
-                          {
-                            day: "2-digit",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
+                        {new Date(comment.created_at).toLocaleString("en-US", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
 
-                      {/* Show "pending review" to the author of the pending comment */}
                       {isOwnPending && !isOrganizer && (
                         <span className={styles.commentPendingBadge}>
                           pending review
                         </span>
                       )}
 
-                      {/* Show "pending" badge to organizer */}
                       {isPending && isOrganizer && (
                         <span className={styles.commentPendingBadge}>
                           pending

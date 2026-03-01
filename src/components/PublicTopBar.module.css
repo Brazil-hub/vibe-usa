@@ -19,16 +19,18 @@
 }
 
 .brand {
-  /* Fonte menor para caber em 260px */
-  font-size: 16px; 
+  font-size: 14px;
   font-weight: 900;
-  letter-spacing: -1px;
-  background: linear-gradient(90deg, #FF69B4, #7B61FF);
+  letter-spacing: -0.4px;
+  white-space: nowrap;
+  background: linear-gradient(90deg, #FF69B4 0%, #7B61FF 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
   border: none;
   padding: 0;
   margin: 0 4px;
+  cursor: pointer;
 }
 
 .login {

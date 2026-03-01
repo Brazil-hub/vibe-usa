@@ -35,7 +35,7 @@ export default function Navbar() {
           role="button"
           onClick={() => go("/feed")}
         >
-          VibeCultural.com
+          MissionSidewalk.com
         </span>
       </header>
 

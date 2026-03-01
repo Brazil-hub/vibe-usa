@@ -1,6 +1,6 @@
 const BASE = "https://nominatim.openstreetmap.org";
 const HEADERS = {
-  "User-Agent": "VibeCultural/1.0 (contact@vibecultural.com)",
+  "User-Agent": "MissionSidewalk/1.0 (contact@missionsidewalk.com)",
   "Accept-Language": "en",
 };
 

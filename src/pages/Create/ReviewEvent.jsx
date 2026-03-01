@@ -9,6 +9,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { DRAFT_SESSION_KEY } from "../../constants";
 import { draftFileStore } from "./draftFileStore";
+import { geocodeAddress } from "../../lib/geocoding";
 
 export default function ReviewEvent() {
   const location = useLocation();
@@ -99,6 +100,19 @@ export default function ReviewEvent() {
       const eventId = state?.event_id ?? state?.id ?? null;
       const isPrivate = state.is_public === false;
 
+      // ── Resolve coordinates ──────────────────────────────────────────────
+      // Prefer coordinates captured by the map picker; if missing but a
+      // location string exists, geocode now so the map pin appears immediately.
+      let resolvedLat = state.lat ?? null;
+      let resolvedLng = state.lng ?? null;
+
+      if (state.location && state.event_format !== "online" && resolvedLat == null) {
+        try {
+          const geo = await geocodeAddress(state.location);
+          if (geo) { resolvedLat = geo.lat; resolvedLng = geo.lng; }
+        } catch { /* non-blocking — publish continues without coords */ }
+      }
+
       const payload = {
         title:        state.title,
         description:  state.description,
@@ -106,8 +120,8 @@ export default function ReviewEvent() {
         category:     state.category,
         event_format: state.event_format,
         location:     state.location   || null,
-        lat:          state.lat        ?? null,
-        lng:          state.lng        ?? null,
+        lat:          resolvedLat,
+        lng:          resolvedLng,
         online_url:   state.online_url || null,
         image_url:    imageUrl         || null,
         is_paid:      !!state.is_paid,

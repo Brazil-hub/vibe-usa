@@ -56,7 +56,7 @@ function loadBaseHtml() {
 async function fetchBaseHtml(host) {
   try {
     const url = `https://${host}/`;
-    const r = await fetch(url, { headers: { "User-Agent": "VibeCultural-OG-Bot/1.0" } });
+    const r = await fetch(url, { headers: { "User-Agent": "MissionSidewalk-OG-Bot/1.0" } });
     if (r.ok) {
       const text = await r.text();
       console.log("[og-handler] loaded index.html via HTTP from:", url);
@@ -127,14 +127,14 @@ export default async function handler(req, res) {
     const title = event.title || "Event";
     const description =
       stripHtml(event.description || "").slice(0, 160) ||
-      `${title} — VibeCultural`;
+      `${title} — MissionSidewalk`;
     const image = event.image_url || "";
     const pageUrl = `https://${host}/event/${id}`;
 
     // These tags are injected at the TOP of <head> so they take priority
     // over the generic site-level OG tags already in index.html.
     const ogBlock = [
-      `<title>${escapeHtml(title)} — VibeCultural</title>`,
+      `<title>${escapeHtml(title)} — MissionSidewalk</title>`,
       `<meta name="description" content="${escapeHtml(description)}" />`,
       // Open Graph (WhatsApp, Facebook, iMessage, Telegram, Slack …)
       `<meta property="og:type" content="article" />`,
@@ -144,8 +144,8 @@ export default async function handler(req, res) {
       image
         ? `<meta property="og:image" content="${escapeHtml(image)}" />`
         : "",
-      `<meta property="og:site_name" content="VibeCultural" />`,
-      `<meta property="og:locale" content="pt_BR" />`,
+      `<meta property="og:site_name" content="MissionSidewalk" />`,
+      `<meta property="og:locale" content="en_US" />`,
       // Twitter / X Card
       `<meta name="twitter:card" content="summary_large_image" />`,
       `<meta name="twitter:title" content="${escapeHtml(title)}" />`,

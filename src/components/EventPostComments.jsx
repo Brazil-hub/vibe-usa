@@ -12,6 +12,15 @@ export default function EventPostComments({
   const [comments, setComments] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+
+  // Get the current user id once so we can show the commenter
+  // their own pending comment (labelled "pending review")
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id);
+    });
+  }, []);
 
   async function loadComments() {
     setLoading(true);
@@ -36,8 +45,15 @@ export default function EventPostComments({
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
 
+    // Organizers see ALL comments (pending + approved) for moderation.
+    // Non-organizers see approved comments + their OWN pending ones.
+    // The DB-level RLS (see migration 20260301_comments_moderation_rls.sql)
+    // enforces the same rule, so this JS filter just avoids fetching
+    // rows we'd discard anyway.
     if (!isOrganizer) {
-      query = query.eq("status", "approved");
+      // RLS will return: approved OR (pending AND user_id = auth.uid())
+      // No extra filter needed here — the DB handles it.
+      // We keep the query as-is and let RLS do its job.
     }
 
     const { data, error } = await query;
@@ -86,7 +102,13 @@ export default function EventPostComments({
     <div className={styles.commentsContainer}>
       <button
         className={styles.commentsToggle}
-        onClick={() => setOpen((prev) => !prev)}
+        onClick={() => {
+          const next = !open;
+          setOpen(next);
+          // Re-fetch every time the section is opened so the organizer
+          // always sees the latest pending comments without a page reload.
+          if (next) loadComments();
+        }}
       >
         {open ? "Hide comments" : "Comments"}
       </button>
@@ -116,8 +138,17 @@ export default function EventPostComments({
                 ? user.name.charAt(0).toUpperCase()
                 : "?";
 
+              const isPending = comment.status === "pending";
+              const isOwnPending =
+                isPending && comment.user_id === currentUserId;
+
               return (
-                <div key={comment.id} className={styles.commentItem}>
+                <div
+                  key={comment.id}
+                  className={`${styles.commentItem} ${
+                    isPending ? styles.commentPending : ""
+                  }`}
+                >
                   {user.avatar_url ? (
                     <img
                       src={user.avatar_url}
@@ -146,6 +177,20 @@ export default function EventPostComments({
                           }
                         )}
                       </span>
+
+                      {/* Show "pending review" to the author of the pending comment */}
+                      {isOwnPending && !isOrganizer && (
+                        <span className={styles.commentPendingBadge}>
+                          pending review
+                        </span>
+                      )}
+
+                      {/* Show "pending" badge to organizer */}
+                      {isPending && isOrganizer && (
+                        <span className={styles.commentPendingBadge}>
+                          pending
+                        </span>
+                      )}
                     </div>
 
                     {comment.text && (
@@ -162,7 +207,7 @@ export default function EventPostComments({
 
                     {isOrganizer && (
                       <div className={styles.commentActions}>
-                        {comment.status === "pending" && (
+                        {isPending && (
                           <button
                             onClick={() => handleApprove(comment.id)}
                             className={styles.commentApprove}

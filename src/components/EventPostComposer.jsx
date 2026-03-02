@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../supabase/client";
+import { useToast } from "../hooks/useToast";
 import styles from "../pages/EventDetailsPage.module.css";
 
 export default function EventPostComposer({
@@ -14,6 +15,7 @@ export default function EventPostComposer({
   const [imageUrl, setImageUrl] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [posted, setPosted] = useState(false);
+  const { showToast, ToastComponent } = useToast();
 
   const disabled = !canComment && !isOrganizer;
 
@@ -99,18 +101,24 @@ export default function EventPostComposer({
 
     if (error) {
       console.error("Erro ao criar post:", error);
+      showToast("Failed to post. Try again.");
     } else {
-  setText("");
-  setImageUrl(null);
-  setPosted(true);
-  onPosted && onPosted();
-  setTimeout(() => setPosted(false), 3000);
-}
+      setText("");
+      setImageUrl(null);
+      setPosted(true);
+      onPosted && onPosted();
+      setTimeout(() => setPosted(false), 3000);
+      if (!isOrganizer && !isPrivate) {
+        showToast("Post sent for review ✅");
+      }
+    }
 
     setSubmitting(false);
   }
 
   return (
+    <>
+    {ToastComponent}
     <div className={styles.composerBox}>
       <textarea
         className={styles.composerInput}
@@ -158,5 +166,6 @@ export default function EventPostComposer({
 
       </div>
     </div>
+    </>
   );
 }

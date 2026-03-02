@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase/client";
 import EventPostComposer from "./EventPostComposer";
 import EventPostCard from "./EventPostCard";
@@ -9,6 +9,8 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
   const [loading, setLoading] = useState(true);
   const [eventMeta, setEventMeta] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [pendingPostCount, setPendingPostCount] = useState(0);
+  const pollRef = useRef(null);
 
   async function loadPosts() {
     setLoading(true);
@@ -108,6 +110,9 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
 
 
     setPosts(enrichedPosts);
+    setPendingPostCount(
+      enrichedPosts.filter((p) => p.status === "pending").length
+    );
     setLoading(false);
     setEventMeta(event);
     setCurrentUser(user || null);
@@ -116,6 +121,14 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
   useEffect(() => {
     loadPosts();
   }, [eventId]);
+
+  // Auto-poll every 15 s so the organizer sees new pending posts
+  // without a manual page reload.
+  useEffect(() => {
+    if (!isOrganizer) return;
+    pollRef.current = setInterval(loadPosts, 15000);
+    return () => clearInterval(pollRef.current);
+  }, [isOrganizer, eventId]);
 
   const isOrganizer =
     currentUser && eventMeta && eventMeta.creator_id === currentUser.id;
@@ -168,7 +181,23 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
 
   return (
     <div className={styles.feedBlock}>
-      <h3 className={styles.sectionTitle}>Event Posts</h3>
+      <div className={styles.feedHeader}>
+        <h3 className={styles.sectionTitle}>Event Posts</h3>
+        {isOrganizer && pendingPostCount > 0 && (
+          <span className={styles.pendingPostBadge}>
+            {pendingPostCount} pending
+          </span>
+        )}
+        {isOrganizer && (
+          <button
+            className={styles.feedRefreshButton}
+            onClick={loadPosts}
+            title="Refresh posts"
+          >
+            ↻
+          </button>
+        )}
+      </div>
 
       <EventPostComposer
         eventId={eventId}

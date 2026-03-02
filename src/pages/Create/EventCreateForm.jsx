@@ -99,9 +99,24 @@ export default function EventCreateForm() {
     setOnlineUrl(source.online_url || "");
     setPrice(source.price || "");
 
-    // Blob URLs are still valid within the same SPA session
-    if (source.image_url) setPreviewUrl(source.image_url);
+    // Only restore permanent https:// URLs here.
+    // Blob: URLs are re-created from draftFileStore in the mount effect below.
+    if (source.image_url && !source.image_url.startsWith("blob:")) {
+      setPreviewUrl(source.image_url);
+    }
   }, [state]);
+
+  // Re-create a fresh blob URL from draftFileStore every time the form mounts.
+  // Chrome can invalidate blob URLs after navigation; creating a new one from
+  // the in-memory Blob guarantees the thumbnail always renders correctly.
+  useEffect(() => {
+    const file = draftFileStore.get();
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── TipTap ──────────────────────────────────────────────────────────────
   const editor = useEditor({
@@ -218,7 +233,7 @@ export default function EventCreateForm() {
       </div>
 
       {resolvedEventFormat === "in_person" && (
-        <div className={styles.card}>
+        <div className={`${styles.card} ${styles.locationCard}`}>
           <LocationMapPicker
             value={locationField}
             onChange={(addr, newLat, newLng) => {

@@ -37,25 +37,46 @@ const DEFAULT_ZOOM   = 13;
  * After normalizeEvent(), the address lives in venue_name (= ev.location).
  * Falls back through all available address fields before using city context.
  */
-function buildGeoQuery(ev) {
+/**
+ * Returns [primaryQuery, fallbackQuery].
+ *
+ * The DB `location` field stores the full Nominatim display_name, e.g.:
+ *   "El Rio, 3158, Mission Street, Bernal Heights, Mission District,
+ *    San Francisco, California, 94143, United States"
+ *
+ * The first segment is the venue name — OSM may not index it (especially
+ * small/new venues). Stripping it leaves the street address which OSM
+ * reliably geocodes.
+ *
+ * primaryQuery  = address-only (first segment stripped when it's a venue name)
+ * fallbackQuery = original full string (in case primary returns nothing)
+ */
+function buildGeoQueries(ev) {
   const place = (ev.venue_name || ev.location || "").trim();
   const city  = (ev.city && ev.city.trim()) ? ev.city.trim() : "San Francisco, CA";
 
-  if (!place) return city;
+  if (!place) return [city, null];
 
-  // If location is already a full Nominatim display_name (contains state/country),
-  // use it as-is — appending city corrupts the query and returns 0 results.
   const lower = place.toLowerCase();
-  if (
+  const isFullDisplayName =
     lower.includes("california") ||
     lower.includes("united states") ||
-    lower.includes("san francisco")
-  ) {
-    return place;
+    lower.includes("san francisco");
+
+  if (isFullDisplayName) {
+    const parts    = place.split(",").map((s) => s.trim()).filter(Boolean);
+    const firstNum = /^\d/.test(parts[0]); // starts with house number → already an address
+
+    if (!firstNum && parts.length > 2) {
+      // First segment is a venue name — strip it for the primary query
+      const addressOnly = parts.slice(1).join(", ");
+      return [addressOnly, place]; // try address first, fall back to full string
+    }
+    return [place, null]; // already starts with a number, use as-is
   }
 
-  // Short venue name only — append city for context
-  return `${place}, ${city}`;
+  // Short name — append city
+  return [`${place}, ${city}`, null];
 }
 
 
@@ -71,32 +92,23 @@ export default function EventsMapView({ events }) {
     const immediate = [];
     const toGeocode = [];
 
-    console.log("[map] processing", events.length, "events");
-
     events.forEach((ev) => {
       // Events that already have coordinates stored in DB
       if (ev.lat != null && ev.lng != null) {
-        console.log("[map] has coords:", ev.title, ev.lat, ev.lng);
         immediate.push({ ...ev, resolvedLat: ev.lat, resolvedLng: ev.lng });
         return;
       }
 
-      // Build geocoding query; skip events with no usable location text
-      const query    = buildGeoQuery(ev);
+      // Build geocoding queries; skip events with no usable location text
+      const [query, fallback] = buildGeoQueries(ev);
       const cacheKey = query.toLowerCase().trim();
 
-      console.log("[map] no coords — query:", JSON.stringify(query), "| location:", ev.location, "| city:", ev.city);
-
-      if (!cacheKey || cacheKey.length < 3) {
-        console.warn("[map] skipped (query too short):", ev.title);
-        return;
-      }
+      if (!cacheKey || cacheKey.length < 3) return;
 
       if (cache[cacheKey]) {
-        console.log("[map] cache hit:", query);
         immediate.push({ ...ev, resolvedLat: cache[cacheKey].lat, resolvedLng: cache[cacheKey].lng });
       } else {
-        toGeocode.push({ ev, query, cacheKey });
+        toGeocode.push({ ev, query, fallback, cacheKey });
       }
     });
 
@@ -113,9 +125,17 @@ export default function EventsMapView({ events }) {
     processingRef.current = true;
 
     while (queueRef.current.length > 0) {
-      const { ev, query, cacheKey } = queueRef.current.shift();
+      const { ev, query, fallback, cacheKey } = queueRef.current.shift();
       try {
-        const result = await geocodeAddress(query);
+        // Try primary (address-only) query first
+        let result = await geocodeAddress(query);
+
+        // If no result and a fallback exists, wait 1s then try it
+        if (!result && fallback) {
+          await new Promise((r) => setTimeout(r, 1150));
+          result = await geocodeAddress(fallback);
+        }
+
         if (result) {
           cache[cacheKey] = { lat: result.lat, lng: result.lng };
           writeCache(cache);

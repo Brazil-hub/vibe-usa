@@ -254,6 +254,15 @@ input[type="datetime-local"] {
   overflow: visible;
 }
 
+/* Card do LocationMapPicker precisa de z-index explícito para que o dropdown
+   autocomplete apareça acima dos cards seguintes. O animation-fill-mode:forwards
+   mantém transform: scale(1) no card, criando um stacking context CSS — sem
+   z-index explícito, os cards posteriores (DOM order) ficam por cima do dropdown. */
+.locationCard {
+  position: relative;
+  z-index: 5;
+}
+
 /* Mobile específico */
 @media (max-width: 768px) {
   input[type="datetime-local"] {

@@ -72,7 +72,7 @@ export default function EventCard({ event, userCoords }) {
           <img
             src={event.image_url}
             alt={event.title}
-            loading="lazy"
+            loading={event.image_url.startsWith("blob:") ? "eager" : "lazy"}
             onError={(e) => {
               e.currentTarget.style.display = "none";
             }}

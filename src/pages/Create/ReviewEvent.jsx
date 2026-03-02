@@ -19,6 +19,8 @@ export default function ReviewEvent() {
   const authLoading = auth?.isLoading ?? auth?.loading ?? false;
   const { showToast, ToastComponent } = useToast();
   const [isPublishing, setIsPublishing] = useState(false);
+  // Fresh object URL for the preview card — avoids stale/revoked blob URL issues
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   // Merge sessionStorage draft with navigation state (nav state wins)
   const state = useMemo(() => {
@@ -38,6 +40,25 @@ export default function ReviewEvent() {
       navigate("/create/visibility", { replace: true });
     }
   }, [state, navigate]);
+
+  // Build a fresh object URL for the image preview.
+  // Blob URLs stored in location.state can become stale; re-creating from
+  // the in-memory draftFileStore guarantees the preview always shows.
+  useEffect(() => {
+    let url = null;
+    const file = draftFileStore.get();
+    if (file) {
+      url = URL.createObjectURL(file);
+      setPreviewImageUrl(url);
+    } else if (state?.image_url && !state.image_url.startsWith("blob:")) {
+      // Already an uploaded https URL (edit flow)
+      setPreviewImageUrl(state.image_url);
+    }
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function publish() {
     if (authLoading) { showToast("Loading session..."); return; }
@@ -189,7 +210,7 @@ export default function ReviewEvent() {
   const previewEvent = {
     id: "preview",
     title: state.title || "Untitled Event",
-    image_url: state.image_url || undefined,
+    image_url: previewImageUrl || undefined,
     category: state.category || null,
     is_paid: !!state.is_paid,
     price: state.price || null,

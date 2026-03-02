@@ -41,12 +41,10 @@ function buildGeoQuery(ev) {
   // venue_name is set by normalizeEvent(); location is the raw DB field.
   // We check both so this works whether or not normalizeEvent was called.
   const place = (ev.venue_name || ev.location || "").trim();
-  const city  = ev.city && ev.city.trim() ? ev.city.trim() : "";
-  // Build query: prefer "place, city" but use place alone if city is empty
-  if (place && city) return `${place}, ${city}`;
-  if (place)         return place;
-  if (city)          return city;
-  return "";
+  // Default to SF when city is missing — most events are in the Mission area
+  const city  = (ev.city && ev.city.trim()) ? ev.city.trim() : "San Francisco, CA";
+  if (place) return `${place}, ${city}`;
+  return city;
 }
 
 /**

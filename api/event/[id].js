@@ -102,7 +102,7 @@ export default async function handler(req, res) {
     const apiUrl =
       `${supabaseUrl}/rest/v1/public_events_feed` +
       `?id=eq.${encodeURIComponent(id)}` +
-      `&select=id,title,description,image_url,location,event_date,category` +
+      `&select=id,title,description,image_url,location,city,event_date,category,is_paid,price` +
       `&limit=1`;
 
     const apiRes = await fetch(apiUrl, {
@@ -125,11 +125,46 @@ export default async function handler(req, res) {
 
     // ── Build OG metadata ─────────────────────────────────────────────────
     const title = event.title || "Event";
-    const description =
-      stripHtml(event.description || "").slice(0, 160) ||
-      `${title} — MissionSidewalk`;
+
+    // ── Rich, inviting description ─────────────────────────────────────────
+    // Format: "Wed, Mar 4 · 5:30 PM · Horsies Market, Mission District · Free"
+    // followed by a snippet of the event description — far more compelling
+    // than raw body text alone.
+    const descParts = [];
+    if (event.event_date) {
+      const d = new Date(event.event_date);
+      const day = d.toLocaleDateString("en-US", {
+        weekday: "short", month: "short", day: "numeric",
+      });
+      const time = d.toLocaleTimeString("en-US", {
+        hour: "numeric", minute: "2-digit", hour12: true,
+      });
+      descParts.push(`${day} · ${time}`);
+    }
+    if (event.location) {
+      const parts = event.location.split(",").map((s) => s.trim()).filter(Boolean);
+      // "Horsies Market, 3368, Mission Street, Mission District, ..."
+      // → show venue + neighbourhood (parts[0] + parts[2]) or first 2 parts
+      const venueLine =
+        parts.length >= 3 ? `${parts[0]}, ${parts[2]}` : parts.slice(0, 2).join(", ");
+      descParts.push(venueLine);
+    } else if (event.city) {
+      descParts.push(event.city);
+    }
+    const pricePart = event.is_paid
+      ? event.price ? `$${event.price}` : "Paid"
+      : "Free";
+    descParts.push(pricePart);
+
+    const metaLine = descParts.join(" · ");
+    const rawDesc = stripHtml(event.description || "").slice(0, 100).trim();
+    const description = rawDesc
+      ? `${metaLine} — ${rawDesc}`
+      : metaLine || `${title} — MissionSidewalk`;
+
     // Use event image if available, otherwise fall back to the site OG image
-    const SITE_IMAGE = "https://www.missionsidewalk.com/og-image.jpg";
+    // Use the request host so the fallback works on any deployment URL
+    const SITE_IMAGE = `https://${host}/og-image.jpg`;
     const image = event.image_url || SITE_IMAGE;
     const pageUrl = `https://${host}/event/${id}`;
 

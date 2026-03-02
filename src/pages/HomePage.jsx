@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { listPublicEvents } from "../supabase/events";
 import EventCard from "../components/EventCard";
 import EventsMapView from "../components/EventsMapView";
-import DateStrip from "../components/DateStrip";
 import styles from "./HomePage.module.css";
 import PublicTopBar from "../components/PublicTopBar";
 import { useAuth } from "../auth/useAuth";
@@ -100,9 +99,6 @@ export default function HomePage() {
   /* visualização: "list" | "map" */
   const [viewMode, setViewMode] = useState("list");
 
-  /* filtro de data (DateStrip) */
-  const [selectedDate, setSelectedDate] = useState(null);
-
   /* coordenadas do usuário para distância nos cards */
   const [userCoords, setUserCoords] = useState(null);
 
@@ -143,31 +139,18 @@ export default function HomePage() {
             isEventStillVisible(ev)
         );
 
-  /* filtro de data — aplicado após o filtro de categoria */
-  const dateFilteredEvents = selectedDate
-    ? filteredEvents.filter((ev) => {
-        if (!ev.event_date) return false;
-        const d = new Date(ev.event_date);
-        return (
-          d.getFullYear() === selectedDate.getFullYear() &&
-          d.getMonth() === selectedDate.getMonth() &&
-          d.getDate() === selectedDate.getDate()
-        );
-      })
-    : filteredEvents;
-
   /* ordenação */
   const sortedEvents =
     sortMode === "recent"
-      ? [...dateFilteredEvents].sort(
+      ? [...filteredEvents].sort(
           (a, b) => new Date(b.created_at) - new Date(a.created_at)
         )
-      : dateFilteredEvents; // já vem ASC por event_local_at do DB (mais próximo primeiro)
+      : filteredEvents; // já vem ASC por event_local_at do DB (mais próximo primeiro)
 
-  /* resetar scroll infinito ao trocar filtro, sort ou data */
+  /* resetar scroll infinito ao trocar filtro ou sort */
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
-  }, [selectedCategory, sortMode, selectedDate]);
+  }, [selectedCategory, sortMode]);
 
   /* eventos visíveis (paginados) */
   const visibleEvents = sortedEvents.slice(0, visibleCount);
@@ -216,13 +199,6 @@ export default function HomePage() {
 
         {!loading && events.length > 0 && (
           <>
-            {/* Date strip — days with events get a pink dot */}
-            <DateStrip
-              events={events.filter(isEventStillVisible)}
-              selectedDate={selectedDate}
-              onSelect={setSelectedDate}
-            />
-
             {/* Filtros de categoria */}
             <div className={styles.categoryFilter}>
               <button onClick={() => setSelectedCategory("all")}>All</button>

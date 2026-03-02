@@ -38,13 +38,24 @@ const DEFAULT_ZOOM   = 13;
  * Falls back through all available address fields before using city context.
  */
 function buildGeoQuery(ev) {
-  // venue_name is set by normalizeEvent(); location is the raw DB field.
-  // We check both so this works whether or not normalizeEvent was called.
   const place = (ev.venue_name || ev.location || "").trim();
-  // Default to SF when city is missing — most events are in the Mission area
   const city  = (ev.city && ev.city.trim()) ? ev.city.trim() : "San Francisco, CA";
-  if (place) return `${place}, ${city}`;
-  return city;
+
+  if (!place) return city;
+
+  // If location is already a full Nominatim display_name (contains state/country),
+  // use it as-is — appending city corrupts the query and returns 0 results.
+  const lower = place.toLowerCase();
+  if (
+    lower.includes("california") ||
+    lower.includes("united states") ||
+    lower.includes("san francisco")
+  ) {
+    return place;
+  }
+
+  // Short venue name only — append city for context
+  return `${place}, ${city}`;
 }
 
 /**

@@ -10,12 +10,18 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
   const [eventMeta, setEventMeta] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [pendingPostCount, setPendingPostCount] = useState(0);
+  const [canComment, setCanComment] = useState(false);
   const pollRef = useRef(null);
+
+  // Derived values — declared before any useEffect so they are never
+  // in the Temporal Dead Zone when dependency arrays are evaluated.
+  const isOrganizer =
+    currentUser && eventMeta && eventMeta.creator_id === currentUser.id;
+  const isPrivate = eventMeta?.is_private;
 
   async function loadPosts() {
     setLoading(true);
 
-    // 1) Buscar posts do evento (apenas approved para usuários normais)
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -26,8 +32,7 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       .eq("id", eventId)
       .single();
 
-    const isOrganizer = user && event && event.creator_id === user.id;
-    const isPrivate = event?.is_private;
+    const organizerNow = user && event && event.creator_id === user.id;
 
     let postsQuery = supabase
       .from("posts")
@@ -49,7 +54,7 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       .eq("event_id", eventId)
       .order("created_at", { ascending: false });
 
-    if (!isOrganizer) {
+    if (!organizerNow) {
       postsQuery = postsQuery.eq("status", "approved");
     }
 
@@ -63,10 +68,9 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
     }
 
     const postsIds = postsData.map((p) => p.id);
-      let likesByPost = {};
-      let likedByUser = {};
-      let commentsByPost = {};
-
+    let likesByPost = {};
+    let likedByUser = {};
+    let commentsByPost = {};
 
     if (postsIds.length > 0) {
       const { data: likesData } = await supabase
@@ -89,15 +93,14 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       }
     }
 
-      const { data: commentsData } = await supabase
-        .from("comments")
-        .select("post_id")
-        .in("post_id", postsIds);
+    const { data: commentsData } = await supabase
+      .from("comments")
+      .select("post_id")
+      .in("post_id", postsIds);
 
-      if (commentsData) {
-        commentsData.forEach((c) => {
-          commentsByPost[c.post_id] =
-            (commentsByPost[c.post_id] || 0) + 1;
+    if (commentsData) {
+      commentsData.forEach((c) => {
+        commentsByPost[c.post_id] = (commentsByPost[c.post_id] || 0) + 1;
       });
     }
 
@@ -107,7 +110,6 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       commentsCount: commentsByPost[post.id] || 0,
       userLiked: likedByUser[post.id] || false,
     }));
-
 
     setPosts(enrichedPosts);
     setPendingPostCount(
@@ -130,16 +132,9 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
     return () => clearInterval(pollRef.current);
   }, [isOrganizer, eventId]);
 
-  const isOrganizer =
-    currentUser && eventMeta && eventMeta.creator_id === currentUser.id;
-
-  const isPrivate = eventMeta?.is_private;
-
   // regra de quem pode comentar:
   // - evento privado: qualquer logado
   // - evento público: só RSVP going/maybe ou organizador
-  const [canComment, setCanComment] = useState(false);
-
   useEffect(() => {
     async function checkRsvp() {
       if (!currentUser || !eventMeta) {

@@ -128,11 +128,11 @@ export default async function handler(req, res) {
     const description =
       stripHtml(event.description || "").slice(0, 160) ||
       `${title} — MissionSidewalk`;
-    const image = event.image_url || "";
+    // Use event image if available, otherwise fall back to the site OG image
+    const SITE_IMAGE = "https://www.missionsidewalk.com/og-image.jpg";
+    const image = event.image_url || SITE_IMAGE;
     const pageUrl = `https://${host}/event/${id}`;
 
-    // These tags are injected at the TOP of <head> so they take priority
-    // over the generic site-level OG tags already in index.html.
     const ogBlock = [
       `<title>${escapeHtml(title)} — MissionSidewalk</title>`,
       `<meta name="description" content="${escapeHtml(description)}" />`,
@@ -141,24 +141,33 @@ export default async function handler(req, res) {
       `<meta property="og:url" content="${pageUrl}" />`,
       `<meta property="og:title" content="${escapeHtml(title)}" />`,
       `<meta property="og:description" content="${escapeHtml(description)}" />`,
-      image
-        ? `<meta property="og:image" content="${escapeHtml(image)}" />`
-        : "",
+      `<meta property="og:image" content="${escapeHtml(image)}" />`,
+      // Hint dimensions so WhatsApp / iMessage render without extra fetches
+      `<meta property="og:image:width" content="1200" />`,
+      `<meta property="og:image:height" content="630" />`,
       `<meta property="og:site_name" content="MissionSidewalk" />`,
       `<meta property="og:locale" content="en_US" />`,
       // Twitter / X Card
       `<meta name="twitter:card" content="summary_large_image" />`,
       `<meta name="twitter:title" content="${escapeHtml(title)}" />`,
       `<meta name="twitter:description" content="${escapeHtml(description)}" />`,
-      image
-        ? `<meta name="twitter:image" content="${escapeHtml(image)}" />`
-        : "",
+      `<meta name="twitter:image" content="${escapeHtml(image)}" />`,
     ]
       .filter(Boolean)
       .join("\n  ");
 
-    // Inject right after <head> so event tags come first
-    const html = baseHtml.replace("<head>", `<head>\n  ${ogBlock}\n`);
+    // Strip the generic site-level OG / Twitter / description tags from the
+    // base HTML so there are NO duplicate meta tags after injection.
+    // Some crawlers (WhatsApp, iMessage) use the LAST occurrence of a tag;
+    // removing duplicates makes the event-specific block the only one present.
+    const stripped = baseHtml
+      .replace(/<title>[^<]*<\/title>/gi, "")
+      .replace(/<meta\s[^>]*property="og:[^"]*"[^>]*\/?>/gi, "")
+      .replace(/<meta\s[^>]*name="twitter:[^"]*"[^>]*\/?>/gi, "")
+      .replace(/<meta\s[^>]*name="description"[^>]*\/?>/gi, "");
+
+    // Inject event-specific block right after <head> — now the only OG tags
+    const html = stripped.replace("<head>", `<head>\n  ${ogBlock}\n`);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("X-OG-Status", `ok:${escapeHtml(title).slice(0, 40)}`);

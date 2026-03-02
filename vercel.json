@@ -5,7 +5,8 @@
     }
   },
   "rewrites": [
-    { "source": "/event/:id", "destination": "/api/event/:id" },
-    { "source": "/(.*)", "destination": "/" }
+    { "source": "/event/:id",   "destination": "/api/event/:id" },
+    { "source": "/api/:path*",  "destination": "/api/:path*" },
+    { "source": "/(.*)",        "destination": "/" }
   ]
 }

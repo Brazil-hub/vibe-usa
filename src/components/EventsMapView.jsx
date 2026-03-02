@@ -82,9 +82,12 @@ export default function EventsMapView({ events }) {
     const immediate = [];
     const toGeocode = [];
 
+    console.log("[map] processing", events.length, "events");
+
     events.forEach((ev) => {
       // Events that already have coordinates stored in DB
       if (ev.lat != null && ev.lng != null) {
+        console.log("[map] has coords:", ev.title, ev.lat, ev.lng);
         immediate.push({ ...ev, resolvedLat: ev.lat, resolvedLng: ev.lng });
         return;
       }
@@ -93,9 +96,15 @@ export default function EventsMapView({ events }) {
       const query    = buildGeoQuery(ev);
       const cacheKey = query.toLowerCase().trim();
 
-      if (!cacheKey || cacheKey.length < 3) return; // nothing to geocode
+      console.log("[map] no coords — query:", JSON.stringify(query), "| location:", ev.location, "| city:", ev.city);
+
+      if (!cacheKey || cacheKey.length < 3) {
+        console.warn("[map] skipped (query too short):", ev.title);
+        return;
+      }
 
       if (cache[cacheKey]) {
+        console.log("[map] cache hit:", query);
         immediate.push({ ...ev, resolvedLat: cache[cacheKey].lat, resolvedLng: cache[cacheKey].lng });
       } else {
         toGeocode.push({ ev, query, cacheKey });

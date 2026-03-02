@@ -99,9 +99,10 @@ export default function EventCreateForm() {
     setOnlineUrl(source.online_url || "");
     setPrice(source.price || "");
 
-    // Only restore permanent https:// URLs here.
-    // Blob: URLs are re-created from draftFileStore in the mount effect below.
-    if (source.image_url && !source.image_url.startsWith("blob:")) {
+    // Only restore real uploaded https:// URLs.
+    // Blob: URLs and the "__draft_image__" marker are handled by the mount
+    // effect below (which re-creates a fresh URL from draftFileStore).
+    if (source.image_url && source.image_url.startsWith("https://")) {
       setPreviewUrl(source.image_url);
     }
   }, [state]);
@@ -170,8 +171,12 @@ export default function EventCreateForm() {
       is_paid:      resolvedIsPaid,
       is_public:    resolvedIsPublic,
       event_format: resolvedEventFormat,
-      // blob URL or existing http URL — upload happens at publish time
-      image_url:    previewUrl || "",
+      // Never store a blob: URL in the draft — those become stale after
+      // navigation / cleanup. Use a marker so ReviewEvent knows to grab
+      // the file from draftFileStore instead of trying to load a blob URL.
+      image_url: draftFileStore.get()
+        ? "__draft_image__"
+        : (previewUrl && previewUrl.startsWith("https://") ? previewUrl : ""),
     };
 
     sessionStorage.setItem(DRAFT_SESSION_KEY, JSON.stringify(draft));

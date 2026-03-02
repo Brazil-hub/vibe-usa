@@ -78,11 +78,15 @@ export default function ReviewEvent() {
       console.log("✅ Session OK, user:", session.user.id);
 
       // ── Upload cover image ──────────────────────────────────────────────
-      // The form defers the upload. Upload happens here, but any failure is
-      // non-blocking — the event is still published without a cover photo.
+      // EventCreateForm defers the upload and sets image_url = "__draft_image__"
+      // (or legacy blob: URL) to signal that a file is waiting in draftFileStore.
+      // Failure is non-blocking — the event is published without a cover photo.
       let imageUrl = state.image_url || "";
 
-      if (imageUrl.startsWith("blob:")) {
+      // "__draft_image__" is a marker set by EventCreateForm meaning
+      // "the file is in draftFileStore — never a raw blob: URL in transit".
+      // We also keep handling legacy blob: URLs just in case.
+      if (imageUrl === "__draft_image__" || imageUrl.startsWith("blob:")) {
         try {
           const file = draftFileStore.get();
           if (file && user?.id) {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MapContainer, TileLayer, Marker, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Tooltip } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { geocodeAddress } from "../lib/geocoding";
@@ -58,28 +58,6 @@ function buildGeoQuery(ev) {
   return `${place}, ${city}`;
 }
 
-/**
- * Fits the map viewport to show all plotted pins.
- * Fires once when the first batch of pins arrives; never re-fires.
- */
-function MapAutoFit({ plotted }) {
-  const map    = useMap();
-  const fitted = useRef(false);
-
-  useEffect(() => {
-    if (fitted.current || plotted.length === 0) return;
-    fitted.current = true;
-
-    const coords = plotted.map((e) => [e.resolvedLat, e.resolvedLng]);
-    if (coords.length === 1) {
-      map.setView(coords[0], 14);
-    } else {
-      map.fitBounds(coords, { padding: [48, 48], maxZoom: 14 });
-    }
-  }, [plotted, map]);
-
-  return null;
-}
 
 export default function EventsMapView({ events }) {
   const [plotted,       setPlotted]       = useState([]);
@@ -182,9 +160,6 @@ export default function EventsMapView({ events }) {
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
         />
-
-        {/* Auto-fit the viewport when pins first arrive */}
-        <MapAutoFit plotted={plotted} />
 
         {plotted.map((ev) => (
           <Marker

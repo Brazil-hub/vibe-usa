@@ -254,7 +254,7 @@ export default function HomePage() {
 
         {/* Map view — mostra TODOS eventos não-expirados (ignora filtro de categoria) */}
         {!loading && viewMode === "map" && (
-          <EventsMapView events={events.filter(isEventStillVisible).map(normalizeEvent)} />
+          <EventsMapView events={events.filter(ev => isEventStillVisible(ev) && !ev.is_private).map(normalizeEvent)} />
         )}
 
         {/* List view */}

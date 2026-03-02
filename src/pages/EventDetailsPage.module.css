@@ -139,6 +139,46 @@
   margin-bottom: 10px;
 }
 
+/* Feed header: title + pending badge + refresh button in one row */
+.feedHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+.feedHeader .sectionTitle {
+  margin-bottom: 0;
+}
+
+/* "X pending" badge for organizer in the posts header */
+.pendingPostBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #92400e;
+  background: rgba(251, 191, 36, 0.25);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+/* Refresh ↻ button in posts header */
+.feedRefreshButton {
+  font-size: 15px;
+  line-height: 1;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s, transform 0.2s;
+  margin-left: auto;
+}
+.feedRefreshButton:hover {
+  color: #ff4fa3;
+  transform: rotate(30deg);
+}
+
 .locationRow {
   font-size: 14px;
   font-weight: 600;

@@ -1,6 +1,6 @@
-import { useEffect, useState, useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { listPublicEvents } from "../supabase/events";
+import { usePublicEvents } from "../hooks/useSupabaseQuery";
 import EventCard from "../components/EventCard";
 import styles from "./HomePage.module.css";
 import PublicTopBar from "../components/PublicTopBar";
@@ -103,27 +103,13 @@ function isEventStillVisible(ev) {
 
 
 export default function HomePage() {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  /* 🔽 filtro */
   const [selectedCategory, setSelectedCategory] = useState("all");
-
-  /* 🔽 paginação */
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loadMoreRef = useRef(null);
 
   const navigate = useNavigate();
   const { user } = useAuth();
-
-  useEffect(() => {
-    async function load() {
-      const { data, error } = await listPublicEvents();
-      if (!error && data) setEvents(data);
-      setLoading(false);
-    }
-    load();
-  }, []);
+  const { data: events = [], isLoading: loading } = usePublicEvents();
 
   /* 🔽 filtro */
   const filteredEvents =

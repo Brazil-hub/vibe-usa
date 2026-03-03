@@ -1,7 +1,6 @@
-import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
-import { getTicketById } from "../../supabase/tickets";
+import { useTicket } from "../../hooks/useSupabaseQuery";
 import { useToast } from "../../hooks/useToast";
 import styles from "./TicketView.module.css";
 
@@ -11,27 +10,12 @@ export default function TicketView() {
   const { user } = useAuth();
   const { showToast, ToastComponent } = useToast();
 
-  const [ticket, setTicket] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { data: ticket, isLoading: loading } = useTicket(ticketId, user?.id);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    async function load() {
-      const { data, error } = await getTicketById(ticketId);
-      if (error || !data) {
-        setLoading(false);
-        return;
-      }
-      setTicket(data);
-      setLoading(false);
-    }
-
-    load();
-  }, [ticketId, user, navigate]);
+  if (!user) {
+    navigate("/login");
+    return null;
+  }
 
   function handleShare() {
     const text = `🎟️ Meu ingresso para ${ticket?.events?.title}\nCódigo: ${ticket?.qr_code}`;

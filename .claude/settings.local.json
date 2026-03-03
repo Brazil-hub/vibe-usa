@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add src/dashboard/DashboardLayout.jsx src/dashboard/DashboardLayout.module.css src/dashboard/events/DashboardEventPage.jsx src/dashboard/events/DashboardEventPage.module.css src/dashboard/events/EventGuestsPage.jsx src/dashboard/events/EventGuestsPage.module.css src/dashboard/events/EventTicketsPage.jsx src/dashboard/overview/OverviewPage.jsx src/dashboard/overview/OverviewPage.module.css src/router/AppRouter.jsx)",
+      "Bash(git commit:*)",
+      "Bash(git push origin claude/blissful-chaplygin)",
+      "Bash(npm run build)",
+      "Bash(git add src/lib/geocoding.js src/components/LocationMapPicker.jsx src/components/LocationMapPicker.module.css src/components/EventsMapView.jsx src/components/EventsMapView.module.css src/pages/Create/EventCreateForm.jsx src/pages/Create/ReviewEvent.jsx src/pages/HomePage.jsx src/pages/HomePage.module.css package.json package-lock.json)",
+      "Bash(git stash)",
+      "Bash(git merge claude/condescending-goldberg --ff-only)",
+      "Bash(git push origin main)"
+    ]
+  }
+}

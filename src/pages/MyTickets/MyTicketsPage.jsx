@@ -1,29 +1,17 @@
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
-import { getMyTickets } from "../../supabase/tickets";
+import { useMyTickets } from "../../hooks/useSupabaseQuery";
 import styles from "./MyTicketsPage.module.css";
 
 export default function MyTicketsPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: tickets = [], isLoading: loading } = useMyTickets(user?.id);
 
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-
-    async function load() {
-      const { data } = await getMyTickets();
-      setTickets(data || []);
-      setLoading(false);
-    }
-
-    load();
-  }, [user, navigate]);
+  if (!user) {
+    navigate("/login");
+    return null;
+  }
 
   if (loading) {
     return (

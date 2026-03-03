@@ -14,12 +14,12 @@ export default function BuyTicketPage() {
 
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [existingTicket, setExistingTicket] = useState(null);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [step, setStep] = useState("form"); // "form" | "confirm" | "success"
 
   useEffect(() => {
     if (!user) {
@@ -29,18 +29,25 @@ export default function BuyTicketPage() {
     }
 
     async function load() {
-      const [{ data: ev }, { data: ticket }] = await Promise.all([
-        getEventById(eventId),
-        getUserTicketForEvent(eventId),
-      ]);
+      try {
+        const [{ data: ev, error: evError }, { data: ticket, error: ticketError }] = await Promise.all([
+          getEventById(eventId),
+          getUserTicketForEvent(eventId),
+        ]);
 
-      setEvent(ev);
-      setExistingTicket(ticket);
+        if (evError) throw evError;
+        if (ticketError) throw ticketError;
 
-      // Pré-preenche com dados do perfil
-      setName(user.user_metadata?.full_name || "");
-      setEmail(user.email || "");
-      setLoading(false);
+        setEvent(ev);
+        setExistingTicket(ticket);
+        setName(user.user_metadata?.full_name || "");
+        setEmail(user.email || "");
+      } catch (err) {
+        console.error("Erro ao carregar evento:", err);
+        setLoadError("Não foi possível carregar o evento. Tente novamente.");
+      } finally {
+        setLoading(false);
+      }
     }
 
     load();
@@ -70,13 +77,24 @@ export default function BuyTicketPage() {
       return;
     }
 
-    navigate(`/my-tickets/${data.ticket.id}`);
+    navigate(`/my-tickets/${data.id}`);
   }
 
   if (loading) {
     return (
       <div className={styles.loading}>
         <div className={styles.spinner} />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className={styles.notFound}>
+        <p>{loadError}</p>
+        <button className={styles.btnGhost} onClick={() => navigate(-1)}>
+          Voltar
+        </button>
       </div>
     );
   }

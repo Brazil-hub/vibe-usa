@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 /* ===========================
    VIBRAGYN — GLOBAL RESET
 =========================== */
@@ -98,4 +100,8 @@ a {
 img {
   max-width: 100%;
   display: block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }

@@ -51,6 +51,8 @@ export default function EventCreateForm() {
   const [price, setPrice] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
   const [showCropPicker, setShowCropPicker] = useState(false);
+  // true when user has picked a file in PhotoCropPicker but hasn't tapped "✓ Use this" yet
+  const [cropPending, setCropPending] = useState(false);
 
   // ── Resolved meta values (nav state → sessionStorage → safe fallback) ──
   const storedDraft = (() => {
@@ -150,6 +152,9 @@ export default function EventCreateForm() {
     if (resolvedEventFormat === "in_person" && !locationField) return showToast("Address is required.");
     if (resolvedEventFormat === "online"    && !onlineUrl)     return showToast("Link is required.");
     if (resolvedIsPaid && (!price || Number(price) <= 0))      return showToast("Invalid price.");
+    // User picked a photo but hasn't tapped "✓ Use this" — block navigation so
+    // the image is not silently lost (common mistake on mobile).
+    if (cropPending) return showToast("Tap '✓ Use this' to confirm your cover photo first");
 
     // Convert the datetime-local string (local time, no TZ) to a proper UTC
     // ISO string so PostgreSQL stores the right moment in time.
@@ -291,8 +296,10 @@ export default function EventCreateForm() {
             onCrop={(blob, url) => {
               draftFileStore.set(blob);
               setPreviewUrl(url);
+              setCropPending(false);
               setShowCropPicker(false);
             }}
+            onPendingChange={setCropPending}
           />
         )}
       </div>

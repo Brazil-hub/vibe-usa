@@ -9,14 +9,18 @@
  *   "done"   → shows the cropped JPEG thumbnail + "Recrop / Change" buttons
  *
  * Props:
- *   onCrop(blob, url)  – called when the user confirms the crop
+ *   onCrop(blob, url)        – called when the user confirms the crop
+ *   onPendingChange(pending) – called with true when a file is picked
+ *                              (crop not yet confirmed), false when confirmed
+ *                              or cleared. Parent can use this to block
+ *                              navigation until the user confirms.
  */
 import { useState, useRef, useEffect } from "react";
 import styles from "./PhotoCropPicker.module.css";
 
 const MAX_OUT_PX = 1200; // max width of the exported JPEG
 
-export default function PhotoCropPicker({ onCrop }) {
+export default function PhotoCropPicker({ onCrop, onPendingChange }) {
   // ── state ──────────────────────────────────────────────────
   const [imgSrc,      setImgSrc]      = useState(null); // raw objectURL
   const [imgW,        setImgW]        = useState(0);    // displayed px
@@ -26,17 +30,20 @@ export default function PhotoCropPicker({ onCrop }) {
   const [croppedUrl,  setCroppedUrl]  = useState(null); // result after "Use this"
 
   // ── refs (not state → no extra renders, always fresh inside effects) ──
-  const containerRef = useRef(null);
-  const imgRef       = useRef(null);
-  const scaleRef     = useRef(1);              // naturalPx → displayedPx
-  const natRef       = useRef({ w: 0, h: 0 }); // natural image size
-  const displayRef   = useRef({ w: 0, h: 0 }); // displayed image size
-  const dragStart    = useRef({ cx: 0, cy: 0, px: 0, py: 0 });
+  const containerRef   = useRef(null);
+  const imgRef         = useRef(null);
+  const scaleRef       = useRef(1);              // naturalPx → displayedPx
+  const natRef         = useRef({ w: 0, h: 0 }); // natural image size
+  const displayRef     = useRef({ w: 0, h: 0 }); // displayed image size
+  const dragStart      = useRef({ cx: 0, cy: 0, px: 0, py: 0 });
+  const originalFileRef = useRef(null);          // raw File — fallback if canvas.toBlob fails
 
   // ── helpers ────────────────────────────────────────────────
   function loadFile(e) {
     const file = e.target.files?.[0];
     if (!file) return;
+    originalFileRef.current = file;             // save original for canvas.toBlob fallback
+    onPendingChange?.(true);                    // notify parent: crop not yet confirmed
     const url = URL.createObjectURL(file);
     setImgSrc((prev) => { if (prev) URL.revokeObjectURL(prev); return url; });
     setCroppedUrl(null);
@@ -150,10 +157,17 @@ export default function PhotoCropPicker({ onCrop }) {
     canvas.getContext("2d").drawImage(img, natX, natY, natW, natH, 0, 0, outW, outH);
 
     canvas.toBlob((blob) => {
-      if (!blob) return;
-      const url = URL.createObjectURL(blob);
+      // canvas.toBlob() can return null on some mobile browsers (iOS Safari).
+      // Fall back to the original File so the user never loses their image silently.
+      const finalBlob = blob || originalFileRef.current;
+      if (!finalBlob) {
+        console.warn("[PhotoCropPicker] canvas.toBlob returned null and no fallback file");
+        return;
+      }
+      const url = URL.createObjectURL(finalBlob);
       setCroppedUrl(url);
-      onCrop(blob, url);
+      onPendingChange?.(false);   // crop confirmed — unblock navigation
+      onCrop(finalBlob, url);
     }, "image/jpeg", 0.85);
   }
 

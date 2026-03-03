@@ -12,18 +12,26 @@ export default function EventPostComments({
   const [comments, setComments] = useState([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [pendingCount, setPendingCount] = useState(0);
+
+  // Get current user id once
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) setCurrentUserId(user.id);
+    });
+  }, []);
 
   async function loadComments() {
     setLoading(true);
 
-    let query = supabase
+    const { data, error } = await supabase
       .from("comments")
       .select(
         `
         id,
         text,
         image_url,
-        sticker,
         created_at,
         status,
         user_id,
@@ -37,27 +45,31 @@ export default function EventPostComments({
       .eq("post_id", postId)
       .order("created_at", { ascending: true });
 
-    if (!isOrganizer) {
-      query = query.eq("status", "approved");
-    }
-
-    const { data, error } = await query;
-
     if (error) {
-      console.error("Erro carregando comentários:", error);
+      console.error("Error loading comments:", error);
       setComments([]);
     } else {
-      setComments(data || []);
+      const rows = data || [];
+      setComments(rows);
+      // Count pending for the organizer badge
+      setPendingCount(rows.filter((c) => c.status === "pending").length);
     }
 
     setLoading(false);
   }
 
+  // Reload when the section opens, when isOrganizer is confirmed,
+  // or when postId changes.
   useEffect(() => {
-    if (open) {
-      loadComments();
-    }
-  }, [open, postId]);
+    if (open) loadComments();
+  }, [open, postId, isOrganizer]);
+
+  // Poll for new pending comments while the section is open (organizer only)
+  useEffect(() => {
+    if (!isOrganizer || !open) return;
+    const interval = setInterval(loadComments, 15000); // every 15 s
+    return () => clearInterval(interval);
+  }, [isOrganizer, open, postId]);
 
   async function handleApprove(id) {
     const { error } = await supabase
@@ -85,12 +97,32 @@ export default function EventPostComments({
 
   return (
     <div className={styles.commentsContainer}>
-      <button
-        className={styles.commentsToggle}
-        onClick={() => setOpen((prev) => !prev)}
-      >
-        {open ? "Ocultar comentários" : "Ver comentários"}
-      </button>
+      <div className={styles.commentsToggleRow}>
+        <button
+          className={styles.commentsToggle}
+          onClick={() => setOpen((prev) => !prev)}
+        >
+          {open ? "Hide comments" : "Comments"}
+        </button>
+
+        {/* Badge showing pending count to organizer even when section is closed */}
+        {isOrganizer && pendingCount > 0 && !open && (
+          <span className={styles.pendingCountBadge}>
+            {pendingCount} pending
+          </span>
+        )}
+
+        {/* Refresh button for organizer when section is open */}
+        {isOrganizer && open && (
+          <button
+            className={styles.refreshButton}
+            onClick={loadComments}
+            title="Refresh comments"
+          >
+            ↻
+          </button>
+        )}
+      </div>
 
       {open && (
         <>
@@ -98,17 +130,16 @@ export default function EventPostComments({
             <EventPostAddComment
               postId={postId}
               onComment={loadComments}
+              isOrganizer={isOrganizer}
             />
           )}
 
           {loading && (
-            <p className={styles.placeholderText}>Carregando comentários…</p>
+            <p className={styles.placeholderText}>Loading comments…</p>
           )}
 
           {!loading && comments.length === 0 && (
-            <p className={styles.placeholderText}>
-              Ainda não há comentários.
-            </p>
+            <p className={styles.placeholderText}>No comments yet.</p>
           )}
 
           {!loading &&
@@ -118,8 +149,17 @@ export default function EventPostComments({
                 ? user.name.charAt(0).toUpperCase()
                 : "?";
 
+              const isPending = comment.status === "pending";
+              const isOwnPending =
+                isPending && comment.user_id === currentUserId;
+
               return (
-                <div key={comment.id} className={styles.commentItem}>
+                <div
+                  key={comment.id}
+                  className={`${styles.commentItem} ${
+                    isPending ? styles.commentPending : ""
+                  }`}
+                >
                   {user.avatar_url ? (
                     <img
                       src={user.avatar_url}
@@ -135,19 +175,28 @@ export default function EventPostComments({
                   <div className={styles.commentBody}>
                     <div className={styles.commentHeader}>
                       <span className={styles.commentName}>
-                        {user.name || "Usuário"}
+                        {user.name || "User"}
                       </span>
                       <span className={styles.commentDate}>
-                        {new Date(comment.created_at).toLocaleString(
-                          "pt-BR",
-                          {
-                            day: "2-digit",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          }
-                        )}
+                        {new Date(comment.created_at).toLocaleString("en-US", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
                       </span>
+
+                      {isOwnPending && !isOrganizer && (
+                        <span className={styles.commentPendingBadge}>
+                          pending review
+                        </span>
+                      )}
+
+                      {isPending && isOrganizer && (
+                        <span className={styles.commentPendingBadge}>
+                          pending
+                        </span>
+                      )}
                     </div>
 
                     {comment.text && (
@@ -164,19 +213,19 @@ export default function EventPostComments({
 
                     {isOrganizer && (
                       <div className={styles.commentActions}>
-                        {comment.status === "pending" && (
+                        {isPending && (
                           <button
                             onClick={() => handleApprove(comment.id)}
                             className={styles.commentApprove}
                           >
-                            Aprovar
+                            Approve
                           </button>
                         )}
                         <button
                           onClick={() => handleDelete(comment.id)}
                           className={styles.commentDelete}
                         >
-                          Deletar
+                          Delete
                         </button>
                       </div>
                     )}

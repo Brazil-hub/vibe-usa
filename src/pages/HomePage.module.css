@@ -195,3 +195,80 @@
 .onboardingSlot {
   margin-bottom: 24px;
 }
+
+/* =========================================
+   CONTROLS ROW — SORT + VIEW TOGGLE
+   ========================================= */
+
+.controlsRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* ── Sort toggle ── */
+.sortToggle {
+  display: flex;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid rgba(255, 63, 142, 0.2);
+}
+
+.sortBtn,
+.sortBtnActive {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+  font-family: inherit;
+}
+
+.sortBtn {
+  background: transparent;
+  color: #6b7280;
+}
+
+.sortBtnActive {
+  background: #ff3f8e;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(255, 63, 142, 0.3);
+}
+
+/* ── View toggle ── */
+.viewToggle {
+  display: flex;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid rgba(255, 63, 142, 0.2);
+}
+
+.viewBtn,
+.viewBtnActive {
+  padding: 6px 11px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: inherit;
+  line-height: 1;
+}
+
+.viewBtn {
+  background: transparent;
+}
+
+.viewBtnActive {
+  background: #ff3f8e;
+  box-shadow: 0 2px 8px rgba(255, 63, 142, 0.3);
+}

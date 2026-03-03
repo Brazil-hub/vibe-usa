@@ -9,12 +9,12 @@ export default function AdminReviewPage() {
   function getPublicImageUrl(path) {
     if (!path) return null;
 
-    // se já for URL completa, retorna direto
+    // if already a full URL, return directly
     if (path.startsWith("http")) return path;
 
-    // monta URL pública do Supabase Storage
+    // build Supabase Storage public URL
     const { data } = supabase.storage
-      .from("event-covers")
+      .from("event-images")
       .getPublicUrl(path);
 
     return data?.publicUrl || null;
@@ -30,7 +30,7 @@ export default function AdminReviewPage() {
       .order("created_at", { ascending: true });
 
     if (error) {
-      console.error("Erro carregando pendentes:", error);
+      console.error("Error loading pending events:", error);
       alert(error.message);
       setEvents([]);
     } else {
@@ -52,7 +52,7 @@ export default function AdminReviewPage() {
     setBusyId(null);
 
     if (error || !data || data.length === 0) {
-      alert("Erro ao atualizar status");
+      alert("Error updating status");
       return;
     }
 
@@ -63,17 +63,16 @@ export default function AdminReviewPage() {
     loadPendingEvents();
   }, []);
 
-  if (loading) return <p style={{ padding: 16 }}>Carregando…</p>;
+  if (loading) return <p style={{ padding: 16 }}>Loading…</p>;
   if (!events.length)
-    return <p style={{ padding: 16 }}>Nenhum evento pendente.</p>;
+    return <p style={{ padding: 16 }}>No pending events.</p>;
 
   return (
     <div style={{ padding: 16, maxWidth: 420 }}>
-      <h2 style={{ marginBottom: 12 }}>Revisão de Eventos</h2>
+      <h2 style={{ marginBottom: 12 }}>Event Review</h2>
 
       {events.map((event) => {
-        const imagePath = event.cover_url || event.image_url;
-        const imageUrl = getPublicImageUrl(imagePath);
+        const imageUrl = getPublicImageUrl(event.image_url);
 
         return (
           <div
@@ -114,27 +113,28 @@ export default function AdminReviewPage() {
                   fontSize: 14,
                 }}
               >
-                Sem imagem
+                No image
               </div>
             )}
 
             <h3 style={{ margin: "6px 0 4px" }}>{event.title}</h3>
 
             {event.description && (
-              <p style={{ margin: "0 0 8px", color: "#444" }}>
-                {event.description}
-              </p>
+              <div
+                style={{ margin: "0 0 8px", color: "#444" }}
+                dangerouslySetInnerHTML={{ __html: event.description }}
+              />
             )}
 
             <p style={{ margin: "6px 0" }}>
-              <strong>Data:</strong>{" "}
+              <strong>Date:</strong>{" "}
               {event.event_date
                 ? new Date(event.event_date).toLocaleString()
                 : "—"}
             </p>
 
             <p style={{ margin: "6px 0" }}>
-              <strong>Categoria:</strong> {event.category || "—"}
+              <strong>Category:</strong> {event.category || "—"}
             </p>
 
             <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
@@ -142,14 +142,14 @@ export default function AdminReviewPage() {
                 onClick={() => setStatus(event.id, "approved")}
                 disabled={busyId === event.id}
               >
-                {busyId === event.id ? "Aprovando…" : "Aprovar"}
+                {busyId === event.id ? "Approving…" : "Approve"}
               </button>
 
               <button
                 onClick={() => setStatus(event.id, "rejected")}
                 disabled={busyId === event.id}
               >
-                {busyId === event.id ? "Rejeitando…" : "Rejeitar"}
+                {busyId === event.id ? "Rejecting…" : "Reject"}
               </button>
             </div>
           </div>

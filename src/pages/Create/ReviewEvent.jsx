@@ -9,6 +9,7 @@ import { useAuth } from "../../auth/useAuth";
 import { useToast } from "../../hooks/useToast";
 import { DRAFT_SESSION_KEY } from "../../constants";
 import { draftFileStore } from "./draftFileStore";
+import { geocodeAddress } from "../../lib/geocoding";
 
 export default function ReviewEvent() {
   const location = useLocation();
@@ -18,6 +19,8 @@ export default function ReviewEvent() {
   const authLoading = auth?.isLoading ?? auth?.loading ?? false;
   const { showToast, ToastComponent } = useToast();
   const [isPublishing, setIsPublishing] = useState(false);
+  // Fresh object URL for the preview card — avoids stale/revoked blob URL issues
+  const [previewImageUrl, setPreviewImageUrl] = useState(null);
 
   // Merge sessionStorage draft with navigation state (nav state wins)
   const state = useMemo(() => {
@@ -38,6 +41,25 @@ export default function ReviewEvent() {
     }
   }, [state, navigate]);
 
+  // Build a fresh object URL for the image preview.
+  // Blob URLs stored in location.state can become stale; re-creating from
+  // the in-memory draftFileStore guarantees the preview always shows.
+  useEffect(() => {
+    let url = null;
+    const file = draftFileStore.get();
+    if (file) {
+      url = URL.createObjectURL(file);
+      setPreviewImageUrl(url);
+    } else if (state?.image_url && !state.image_url.startsWith("blob:")) {
+      // Already an uploaded https URL (edit flow)
+      setPreviewImageUrl(state.image_url);
+    }
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   async function publish() {
     if (authLoading) { showToast("Loading session..."); return; }
     if (!user?.id)   { navigate("/login", { replace: true }); return; }
@@ -56,21 +78,28 @@ export default function ReviewEvent() {
       console.log("✅ Session OK, user:", session.user.id);
 
       // ── Upload cover image ──────────────────────────────────────────────
-      // The form defers the upload. Upload happens here, but any failure is
-      // non-blocking — the event is still published without a cover photo.
+      // EventCreateForm defers the upload and sets image_url = "__draft_image__"
+      // (or legacy blob: URL) to signal that a file is waiting in draftFileStore.
+      // Failure is non-blocking — the event is published without a cover photo.
       let imageUrl = state.image_url || "";
 
-      if (imageUrl.startsWith("blob:")) {
+      // "__draft_image__" is a marker set by EventCreateForm meaning
+      // "the file is in draftFileStore — never a raw blob: URL in transit".
+      // We also keep handling legacy blob: URLs just in case.
+      if (imageUrl === "__draft_image__" || imageUrl.startsWith("blob:")) {
         try {
           const file = draftFileStore.get();
           if (file && user?.id) {
-            const fileName = `${user.id}-${Date.now()}-${file.name}`;
+            // Always use a clean filename — avoids spaces/special chars that
+            // break Supabase Storage URLs. resizeAndCompressImage outputs JPEG.
+            const fileName = `${user.id}-${Date.now()}.jpg`;
             const { error: uploadError, data: uploadData } = await supabase.storage
               .from("event-images")
-              .upload(fileName, file);
+              .upload(fileName, file, { contentType: "image/jpeg" });
 
             if (uploadError) {
-              console.warn("Cover upload error (non-blocking):", uploadError);
+              console.warn("Cover upload error:", uploadError);
+              showToast(`Image upload failed: ${uploadError.message}`);
               imageUrl = "";
             } else {
               console.log("Cover uploaded:", uploadData);
@@ -81,17 +110,33 @@ export default function ReviewEvent() {
               draftFileStore.clear();
             }
           } else {
-            imageUrl = ""; // file lost (HMR / page refresh) — skip
+            // File was lost (page refresh between steps) — publish without image
+            console.warn("draftFileStore empty — publishing without image");
+            showToast("Image was lost (page was refreshed) — publishing without cover photo");
+            imageUrl = "";
           }
         } catch (uploadEx) {
-          // supabase-js storage re-throws network errors — catch and skip
-          console.warn("Cover upload threw (non-blocking):", uploadEx);
+          console.warn("Cover upload threw:", uploadEx);
+          showToast(`Image upload error: ${uploadEx?.message || "unknown error"}`);
           imageUrl = "";
         }
       }
 
       const eventId = state?.event_id ?? state?.id ?? null;
       const isPrivate = state.is_public === false;
+
+      // ── Resolve coordinates ──────────────────────────────────────────────
+      // Prefer coordinates captured by the map picker; if missing but a
+      // location string exists, geocode now so the map pin appears immediately.
+      let resolvedLat = state.lat ?? null;
+      let resolvedLng = state.lng ?? null;
+
+      if (state.location && state.event_format !== "online" && resolvedLat == null) {
+        try {
+          const geo = await geocodeAddress(state.location);
+          if (geo) { resolvedLat = geo.lat; resolvedLng = geo.lng; }
+        } catch { /* non-blocking — publish continues without coords */ }
+      }
 
       const payload = {
         title:        state.title,
@@ -100,6 +145,8 @@ export default function ReviewEvent() {
         category:     state.category,
         event_format: state.event_format,
         location:     state.location   || null,
+        lat:          resolvedLat,
+        lng:          resolvedLng,
         online_url:   state.online_url || null,
         image_url:    imageUrl         || null,
         is_paid:      !!state.is_paid,
@@ -167,7 +214,7 @@ export default function ReviewEvent() {
   const previewEvent = {
     id: "preview",
     title: state.title || "Untitled Event",
-    image_url: state.image_url || undefined,
+    image_url: previewImageUrl || undefined,
     category: state.category || null,
     is_paid: !!state.is_paid,
     price: state.price || null,
@@ -191,8 +238,12 @@ export default function ReviewEvent() {
     <div className={styles.container}>
       {/* ── Step header ── */}
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Create Event</div>
-        <div className={styles.processStep}>Step 5 of 5 · Review</div>
+        <div className={styles.processTitle}>
+          {state?.event_id ? "Edit Event" : "Create Event"}
+        </div>
+        <div className={styles.processStep}>
+          {state?.event_id ? "Review Changes" : "Step 5 of 5 · Review"}
+        </div>
       </div>
 
       {/* ── Preview label ── */}
@@ -214,7 +265,7 @@ export default function ReviewEvent() {
         <span className={styles.metaBadge}>{formatLabel}</span>
         {state.is_paid && state.price ? (
           <span className={styles.metaBadgePink}>
-            R$ {Number(state.price).toFixed(2)}
+            ${Number(state.price).toFixed(2)}
           </span>
         ) : (
           <span className={styles.metaBadge}>Free</span>

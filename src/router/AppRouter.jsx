@@ -18,9 +18,8 @@ const EventCreateForm   = lazy(() => import("../pages/Create/EventCreateForm"));
 const ReviewEvent       = lazy(() => import("../pages/Create/ReviewEvent"));
 
 const OverviewPage        = lazy(() => import("../dashboard/overview/OverviewPage"));
+const DashboardLayout     = lazy(() => import("../dashboard/DashboardLayout"));
 const DashboardEventPage  = lazy(() => import("../dashboard/events/DashboardEventPage"));
-const EventOverviewPage   = lazy(() => import("../dashboard/events/EventOverviewPage"));
-const EventGuestsPage     = lazy(() => import("../dashboard/events/EventGuestsPage"));
 
 const AdminReviewPage   = lazy(() => import("../pages/Admin/AdminReviewPage"));
 
@@ -61,12 +60,9 @@ export default function AppRouter() {
               <Route path="/create/form" element={<EventCreateForm />} />
               <Route path="/create/review" element={<ReviewEvent />} />
 
-              <Route path="/dashboard">
+              <Route path="/dashboard" element={<DashboardLayout />}>
                 <Route index element={<OverviewPage />} />
-                <Route path="event/:id" element={<DashboardEventPage />}>
-                  <Route index element={<EventOverviewPage />} />
-                  <Route path="guests" element={<EventGuestsPage />} />
-                </Route>
+                <Route path="event/:id" element={<DashboardEventPage />} />
               </Route>
 
               <Route path="/admin/review" element={<AdminReviewPage />} />

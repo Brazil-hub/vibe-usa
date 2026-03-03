@@ -104,11 +104,37 @@
 }
 
 
-/* LOCAL */
-.location {
-  font-size: 13px;
-  font-weight: 600;
-  color: #111827;
+/* ── Footer: venue + distance ──────────────────────────────────────── */
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+/* Venue name — truncated to one line */
+.venueText {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0; /* allows ellipsis inside flex */
+}
+
+/* Distance badge */
+.distanceBadge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: #ff2d8d;
+  background: rgba(255, 45, 141, 0.1);
+  padding: 3px 9px;
+  border-radius: 999px;
+  white-space: nowrap;
 }
 .weekday{
   font-weight: 900;

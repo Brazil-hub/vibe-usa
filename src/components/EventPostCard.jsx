@@ -78,9 +78,9 @@ export default function EventPostCard({
         )}
 
         <div>
-          <p className={styles.postName}>{user.name || "Usuário"}</p>
+          <p className={styles.postName}>{user.name || "User"}</p>
           <p className={styles.postDate}>
-            {new Date(post.created_at).toLocaleString("pt-BR", {
+            {new Date(post.created_at).toLocaleString("en-US", {
               day: "2-digit",
               month: "short",
               hour: "2-digit",
@@ -89,7 +89,7 @@ export default function EventPostCard({
           </p>
           {isPending && isOrganizer && (
             <span className={styles.postPendingBadge}>
-              Aguardando aprovação
+              Pending approval
             </span>
           )}
         </div>
@@ -115,13 +115,6 @@ export default function EventPostCard({
           💬 {post.commentsCount}
         </span>
 
-        <EventPostComments
-          postId={post.id}
-          canComment={canComment}
-          isOrganizer={isOrganizer}
-          onChange={onChange}
-        />
-
         {isOrganizer && (
           <div className={styles.postAdminActions}>
             {isPending && (
@@ -129,15 +122,22 @@ export default function EventPostCard({
                 className={styles.postApprove}
                 onClick={approvePost}
               >
-                Aprovar
+                Approve
               </button>
             )}
             <button className={styles.postDelete} onClick={deletePost}>
-              Deletar
+              Delete
             </button>
           </div>
         )}
       </div>
+
+      <EventPostComments
+        postId={post.id}
+        canComment={canComment}
+        isOrganizer={isOrganizer}
+        onChange={onChange}
+      />
     </div>
   );
 }

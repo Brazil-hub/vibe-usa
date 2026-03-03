@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "../supabase/client";
+import { useToast } from "../hooks/useToast";
 import styles from "../pages/EventDetailsPage.module.css";
 
 /**
@@ -47,7 +48,7 @@ async function compressForComment(file) {
     canvas.toBlob(resolve, "image/jpeg", QUALITY)
   );
 
-  if (!blob) throw new Error("Falha ao compactar imagem");
+  if (!blob) throw new Error("Failed to compress image");
 
   const safeName = (file.name || "comment")
     .replace(/\.(png|jpg|jpeg|webp|heic|heif)$/i, "")
@@ -56,10 +57,11 @@ async function compressForComment(file) {
   return new File([blob], `${safeName}.jpg`, { type: "image/jpeg" });
 }
 
-export default function EventPostAddComment({ postId, onComment }) {
+export default function EventPostAddComment({ postId, onComment, isOrganizer }) {
   const [text, setText] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [sending, setSending] = useState(false);
+  const { showToast, ToastComponent } = useToast();
 
   async function handleImageChange(e) {
     const file = e.target.files?.[0];
@@ -69,15 +71,15 @@ export default function EventPostAddComment({ postId, onComment }) {
       const compressed = await compressForComment(file);
 
       console.log(
-        "Imagem original (KB):",
+        "Original image (KB):",
         Math.round(file.size / 1024),
-        "→ compactada (KB):",
+        "→ compressed (KB):",
         Math.round(compressed.size / 1024)
       );
 
       setImageFile(compressed);
     } catch (err) {
-      console.error("Erro ao compactar imagem:", err);
+      console.error("Error compressing image:", err);
       setImageFile(file); // fallback
     }
   }
@@ -107,7 +109,7 @@ export default function EventPostAddComment({ postId, onComment }) {
         });
 
       if (uploadError) {
-        console.error("Erro ao subir imagem:", uploadError);
+        console.error("Error uploading image:", uploadError);
       } else {
         const { data } = supabase.storage
           .from("comment-images")
@@ -117,31 +119,43 @@ export default function EventPostAddComment({ postId, onComment }) {
       }
     }
 
+    // Non-organizers submit as "pending" so the organizer can moderate.
+    // Organizers post directly as "approved".
+    const status = isOrganizer ? "approved" : "pending";
+
     const { error } = await supabase.from("comments").insert({
       post_id: postId,
       user_id: user.id,
       text,
       image_url,
-      status: "approved",
+      status,
     });
 
     if (error) {
-      console.error("Erro ao comentar:", error);
+      console.error("Error posting comment:", error);
+      showToast("Failed to send comment. Try again.");
     } else {
       setText("");
       setImageFile(null);
       onComment && onComment();
+      if (isOrganizer) {
+        showToast("Comment posted ✅");
+      } else {
+        showToast("Comment sent for review ✅");
+      }
     }
 
     setSending(false);
   }
 
   return (
+    <>
+    {ToastComponent}
     <div className={styles.commentComposer}>
       <input
         className={styles.commentInput}
         type="text"
-        placeholder="Escreva um comentário…"
+        placeholder="Write a comment…"
         value={text}
         onChange={(e) => setText(e.target.value)}
         disabled={sending}
@@ -160,8 +174,9 @@ export default function EventPostAddComment({ postId, onComment }) {
         onClick={submit}
         disabled={sending || (!text.trim() && !imageFile)}
       >
-        Enviar
+        Send
       </button>
     </div>
+    </>
   );
 }

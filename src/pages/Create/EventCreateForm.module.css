@@ -82,6 +82,39 @@
   border: 1px solid #ddd;
 }
 
+/* ── Cover photo preview (after crop is confirmed) ── */
+.coverPreviewWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coverThumb {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  display: block;
+}
+
+.changeCoverBtn {
+  width: 100%;
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1.5px solid rgba(255, 63, 142, 0.4);
+  background: rgba(255, 63, 142, 0.06);
+  color: #ff3f8e;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.changeCoverBtn:hover {
+  background: rgba(255, 63, 142, 0.12);
+}
+
 .fileLabel {
   display: flex;
   justify-content: center;
@@ -219,6 +252,15 @@ input[type="datetime-local"] {
 /* Garantir que o card não esconda o input */
 .card {
   overflow: visible;
+}
+
+/* Card do LocationMapPicker precisa de z-index explícito para que o dropdown
+   autocomplete apareça acima dos cards seguintes. O animation-fill-mode:forwards
+   mantém transform: scale(1) no card, criando um stacking context CSS — sem
+   z-index explícito, os cards posteriores (DOM order) ficam por cima do dropdown. */
+.locationCard {
+  position: relative;
+  z-index: 5;
 }
 
 /* Mobile específico */

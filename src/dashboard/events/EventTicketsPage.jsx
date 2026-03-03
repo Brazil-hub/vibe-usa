@@ -55,11 +55,12 @@ export default function EventTicketsPage() {
     setGenerating(false);
 
     if (error) {
-      showToast("Erro ao gerar ingresso", "error");
+      showToast(`Error: ${error?.message || "Couldn't generate ticket"}`, "error");
+      console.error("generateTicket error:", error);
       return;
     }
 
-    showToast(`Ingresso gerado! Código: ${data.qr_code} 🎟️`);
+    showToast(`Ticket generated! Code: ${data?.qr_code || "✓"} 🎟️`);
     setShowGenModal(false);
     setGenName("");
     setGenEmail("");
@@ -104,6 +105,7 @@ export default function EventTicketsPage() {
     const q = search.toLowerCase();
     return (
       t.name?.toLowerCase().includes(q) ||
+      t.attendee_email?.toLowerCase().includes(q) ||
       t.qr_code?.toLowerCase().includes(q)
     );
   });
@@ -115,6 +117,14 @@ export default function EventTicketsPage() {
     cancelled: tickets.filter((t) => t.status === "cancelled").length,
   };
 
+  const revenue = event?.is_paid && event?.price
+    ? (stats.active + stats.used) * (event.price || 0)
+    : 0;
+
+  const revenueFormatted = revenue > 0
+    ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(revenue)
+    : null;
+
   return (
     <div className={styles.page}>
       {/* STATS */}
@@ -125,16 +135,22 @@ export default function EventTicketsPage() {
         </div>
         <div className={styles.statCard}>
           <span className={styles.statNum} style={{ color: "#22c55e" }}>{stats.active}</span>
-          <span className={styles.statLabel}>Ativos</span>
+          <span className={styles.statLabel}>Active</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statNum} style={{ color: "#6b7280" }}>{stats.used}</span>
-          <span className={styles.statLabel}>Usados</span>
+          <span className={styles.statLabel}>Used</span>
         </div>
         <div className={styles.statCard}>
           <span className={styles.statNum} style={{ color: "#ef4444" }}>{stats.cancelled}</span>
-          <span className={styles.statLabel}>Cancelados</span>
+          <span className={styles.statLabel}>Cancelled</span>
         </div>
+        {revenueFormatted && (
+          <div className={styles.statCard}>
+            <span className={styles.statNum} style={{ color: "#22c55e", fontSize: 16 }}>{revenueFormatted}</span>
+            <span className={styles.statLabel}>Revenue</span>
+          </div>
+        )}
       </div>
 
       {/* ACTIONS */}
@@ -142,7 +158,7 @@ export default function EventTicketsPage() {
         <input
           className={styles.searchInput}
           type="text"
-          placeholder="Buscar por nome, e-mail ou código…"
+          placeholder="Search by name, email or code…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -150,7 +166,7 @@ export default function EventTicketsPage() {
           className={styles.btnGenerate}
           onClick={() => setShowGenModal(true)}
         >
-          + Gerar ingresso
+          + Generate Ticket
         </button>
       </div>
 
@@ -160,14 +176,14 @@ export default function EventTicketsPage() {
           <span className={styles.emptyIcon}>🎟️</span>
           <p className={styles.emptyTitle}>
             {tickets.length === 0
-              ? "Nenhum ingresso ainda"
-              : "Nenhum resultado"}
+              ? "No tickets yet"
+              : "No results"}
           </p>
           {tickets.length === 0 && (
             <p className={styles.emptyText}>
               {event?.is_private
-                ? "Gere ingressos para os convidados do seu evento privado."
-                : "Os ingressos vendidos vão aparecer aqui."}
+                ? "Generate tickets for your private event guests."
+                : "Sold tickets will appear here."}
             </p>
           )}
         </div>
@@ -189,28 +205,28 @@ export default function EventTicketsPage() {
       {showGenModal && (
         <div className={styles.overlay} onClick={() => setShowGenModal(false)}>
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>🎟️ Gerar Ingresso</h3>
+            <h3 className={styles.modalTitle}>🎟️ Generate Ticket</h3>
             <p className={styles.modalSubtitle}>
-              Gera um ingresso para um convidado específico.
+              Generate a ticket for a specific guest.
             </p>
 
             <div className={styles.field}>
-              <label className={styles.label}>Nome do participante</label>
+              <label className={styles.label}>Attendee name</label>
               <input
                 className={styles.input}
                 type="text"
-                placeholder="Nome completo"
+                placeholder="Full name"
                 value={genName}
                 onChange={(e) => setGenName(e.target.value)}
               />
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>E-mail do participante</label>
+              <label className={styles.label}>Attendee email</label>
               <input
                 className={styles.input}
                 type="email"
-                placeholder="email@exemplo.com"
+                placeholder="email@example.com"
                 value={genEmail}
                 onChange={(e) => setGenEmail(e.target.value)}
               />
@@ -222,13 +238,13 @@ export default function EventTicketsPage() {
                 onClick={handleGenerate}
                 disabled={generating}
               >
-                {generating ? "Gerando…" : "Gerar ingresso"}
+                {generating ? "Generating…" : "Generate ticket"}
               </button>
               <button
                 className={styles.btnCancel}
                 onClick={() => setShowGenModal(false)}
               >
-                Cancelar
+                Cancel
               </button>
             </div>
           </div>
@@ -248,15 +264,15 @@ function TicketRow({ ticket, onCheckIn, onCancel, onCopyCode }) {
   const [expanded, setExpanded] = useState(false);
 
   const statusConfig = {
-    active: { label: "Ativo", color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
-    used: { label: "Usado", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
-    cancelled: { label: "Cancelado", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+    active:    { label: "Active",    color: "#22c55e", bg: "rgba(34,197,94,0.1)" },
+    used:      { label: "Used",      color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
+    cancelled: { label: "Cancelled", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
   };
   const st = statusConfig[ticket.status] || statusConfig.active;
 
-  const createdAt = new Date(ticket.created_at).toLocaleDateString("pt-BR", {
-    day: "2-digit",
+  const createdAt = new Date(ticket.created_at).toLocaleDateString("en-US", {
     month: "short",
+    day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
   });
@@ -274,7 +290,7 @@ function TicketRow({ ticket, onCheckIn, onCancel, onCopyCode }) {
           />
           <div>
             <p className={styles.rowName}>{ticket.name || "—"}</p>
-            <p className={styles.rowEmail}>{ticket.payment_provider === "generated" ? "🎁 Gerado" : "🛒 Comprado"}</p>
+            <p className={styles.rowEmail}>{ticket.payment_provider === "generated" ? "🎁 Generated" : "🛒 Purchased"}</p>
           </div>
         </div>
 
@@ -294,17 +310,17 @@ function TicketRow({ ticket, onCheckIn, onCancel, onCopyCode }) {
           <div className={styles.codeRow}>
             <code className={styles.code}>{ticket.qr_code}</code>
             <button className={styles.copyBtn} onClick={onCopyCode}>
-              Copiar
+              Copy
             </button>
           </div>
 
           <p className={styles.detailMeta}>
-            {ticket.payment_provider === "generated" ? "🎁 Gerado pelo organizador" : "🛒 Compra"} · {createdAt}
+            {ticket.payment_provider === "generated" ? "🎁 Generated by organizer" : "🛒 Purchase"} · {createdAt}
           </p>
 
           {ticket.used_at && (
             <p className={styles.detailMeta}>
-              ✅ Check-in: {new Date(ticket.used_at).toLocaleString("pt-BR")}
+              ✅ Check-in: {new Date(ticket.used_at).toLocaleString("en-US")}
             </p>
           )}
 
@@ -316,7 +332,7 @@ function TicketRow({ ticket, onCheckIn, onCancel, onCopyCode }) {
             )}
             {ticket.status !== "cancelled" && (
               <button className={styles.btnCancelRow} onClick={onCancel}>
-                Cancelar
+                Cancel
               </button>
             )}
           </div>

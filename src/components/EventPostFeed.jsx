@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "../supabase/client";
 import EventPostComposer from "./EventPostComposer";
 import EventPostCard from "./EventPostCard";
@@ -9,11 +9,19 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
   const [loading, setLoading] = useState(true);
   const [eventMeta, setEventMeta] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [pendingPostCount, setPendingPostCount] = useState(0);
+  const [canComment, setCanComment] = useState(false);
+  const pollRef = useRef(null);
+
+  // Derived values — declared before any useEffect so they are never
+  // in the Temporal Dead Zone when dependency arrays are evaluated.
+  const isOrganizer =
+    currentUser && eventMeta && eventMeta.creator_id === currentUser.id;
+  const isPrivate = eventMeta?.is_private;
 
   async function loadPosts() {
     setLoading(true);
 
-    // 1) Buscar posts do evento (apenas approved para usuários normais)
     const {
       data: { user },
     } = await supabase.auth.getUser();
@@ -24,8 +32,7 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       .eq("id", eventId)
       .single();
 
-    const isOrganizer = user && event && event.creator_id === user.id;
-    const isPrivate = event?.is_private;
+    const organizerNow = user && event && event.creator_id === user.id;
 
     let postsQuery = supabase
       .from("posts")
@@ -47,7 +54,7 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       .eq("event_id", eventId)
       .order("created_at", { ascending: false });
 
-    if (!isOrganizer) {
+    if (!organizerNow) {
       postsQuery = postsQuery.eq("status", "approved");
     }
 
@@ -61,10 +68,9 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
     }
 
     const postsIds = postsData.map((p) => p.id);
-      let likesByPost = {};
-      let likedByUser = {};
-      let commentsByPost = {};
-
+    let likesByPost = {};
+    let likedByUser = {};
+    let commentsByPost = {};
 
     if (postsIds.length > 0) {
       const { data: likesData } = await supabase
@@ -87,15 +93,14 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       }
     }
 
-      const { data: commentsData } = await supabase
-        .from("comments")
-        .select("post_id")
-        .in("post_id", postsIds);
+    const { data: commentsData } = await supabase
+      .from("comments")
+      .select("post_id")
+      .in("post_id", postsIds);
 
-      if (commentsData) {
-        commentsData.forEach((c) => {
-          commentsByPost[c.post_id] =
-            (commentsByPost[c.post_id] || 0) + 1;
+    if (commentsData) {
+      commentsData.forEach((c) => {
+        commentsByPost[c.post_id] = (commentsByPost[c.post_id] || 0) + 1;
       });
     }
 
@@ -106,8 +111,10 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
       userLiked: likedByUser[post.id] || false,
     }));
 
-
     setPosts(enrichedPosts);
+    setPendingPostCount(
+      enrichedPosts.filter((p) => p.status === "pending").length
+    );
     setLoading(false);
     setEventMeta(event);
     setCurrentUser(user || null);
@@ -117,16 +124,17 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
     loadPosts();
   }, [eventId]);
 
-  const isOrganizer =
-    currentUser && eventMeta && eventMeta.creator_id === currentUser.id;
-
-  const isPrivate = eventMeta?.is_private;
+  // Auto-poll every 15 s so the organizer sees new pending posts
+  // without a manual page reload.
+  useEffect(() => {
+    if (!isOrganizer) return;
+    pollRef.current = setInterval(loadPosts, 15000);
+    return () => clearInterval(pollRef.current);
+  }, [isOrganizer, eventId]);
 
   // regra de quem pode comentar:
   // - evento privado: qualquer logado
   // - evento público: só RSVP going/maybe ou organizador
-  const [canComment, setCanComment] = useState(false);
-
   useEffect(() => {
     async function checkRsvp() {
       if (!currentUser || !eventMeta) {
@@ -168,7 +176,23 @@ export default function EventPostFeed({ eventId, rsvpStatus }) {
 
   return (
     <div className={styles.feedBlock}>
-      <h3 className={styles.sectionTitle}>Event Posts</h3>
+      <div className={styles.feedHeader}>
+        <h3 className={styles.sectionTitle}>Event Posts</h3>
+        {isOrganizer && pendingPostCount > 0 && (
+          <span className={styles.pendingPostBadge}>
+            {pendingPostCount} pending
+          </span>
+        )}
+        {isOrganizer && (
+          <button
+            className={styles.feedRefreshButton}
+            onClick={loadPosts}
+            title="Refresh posts"
+          >
+            ↻
+          </button>
+        )}
+      </div>
 
       <EventPostComposer
         eventId={eventId}

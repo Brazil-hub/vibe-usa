@@ -7,15 +7,23 @@ import styles from "./EventCreateForm.module.css";
 import { useToast } from "../../hooks/useToast";
 import { DRAFT_SESSION_KEY } from "../../constants";
 import { draftFileStore } from "./draftFileStore";
+import LocationMapPicker from "../../components/LocationMapPicker";
+import PhotoCropPicker from "../../components/PhotoCropPicker";
 
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 
+/**
+ * Converts any date value (ISO UTC string, Date, etc.) to the
+ * "YYYY-MM-DDTHH:MM" format that <input type="datetime-local"> expects,
+ * using the browser's LOCAL timezone — so the user always sees/edits
+ * their local time regardless of how the value is stored in the DB.
+ */
 function toDatetimeLocal(value) {
   if (!value) return "";
-  if (typeof value === "string" && value.includes("T")) return value.slice(0, 16);
   const date = new Date(value);
+  if (isNaN(date.getTime())) return "";
   const pad = (n) => String(n).padStart(2, "0");
   return (
     date.getFullYear() + "-" + pad(date.getMonth() + 1) + "-" + pad(date.getDate()) +
@@ -23,30 +31,6 @@ function toDatetimeLocal(value) {
   );
 }
 
-async function resizeAndCompressImage(file) {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const reader = new FileReader();
-    reader.onload = (e) => { img.src = e.target.result; };
-    img.onload = () => {
-      const MAX_SIZE = 1200;
-      let { width, height } = img;
-      if (width > height && width > MAX_SIZE) {
-        height = Math.round((height * MAX_SIZE) / width); width = MAX_SIZE;
-      } else if (height > MAX_SIZE) {
-        width = Math.round((width * MAX_SIZE) / height); height = MAX_SIZE;
-      }
-      const canvas = document.createElement("canvas");
-      canvas.width = width; canvas.height = height;
-      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
-      canvas.toBlob(
-        (blob) => resolve(new File([blob], file.name, { type: "image/jpeg", lastModified: Date.now() })),
-        "image/jpeg", 0.75
-      );
-    };
-    reader.readAsDataURL(file);
-  });
-}
 
 export default function EventCreateForm() {
   const { state } = useLocation();
@@ -61,9 +45,14 @@ export default function EventCreateForm() {
   const [eventDate, setEventDate] = useState("");
   const [category, setCategory] = useState("party");
   const [locationField, setLocationField] = useState("");
+  const [lat, setLat] = useState(null);
+  const [lng, setLng] = useState(null);
   const [onlineUrl, setOnlineUrl] = useState("");
   const [price, setPrice] = useState("");
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [showCropPicker, setShowCropPicker] = useState(false);
+  // true when user has picked a file in PhotoCropPicker but hasn't tapped "✓ Use this" yet
+  const [cropPending, setCropPending] = useState(false);
 
   // ── Resolved meta values (nav state → sessionStorage → safe fallback) ──
   const storedDraft = (() => {
@@ -76,11 +65,19 @@ export default function EventCreateForm() {
 
   // ── Load draft ──────────────────────────────────────────────────────────
   useEffect(() => {
-    let source = state;
-    if (!source) {
-      try { const r = sessionStorage.getItem(DRAFT_SESSION_KEY); if (r) source = JSON.parse(r); }
-      catch {}
-    }
+    // 1. Always try sessionStorage first — it has the full event object when
+    //    coming from handleEditEvent (dashboard edit).
+    let source = null;
+    try {
+      const r = sessionStorage.getItem(DRAFT_SESSION_KEY);
+      if (r) source = JSON.parse(r);
+    } catch {}
+
+    // 2. Merge nav state on top (higher priority for its own fields).
+    //    When editing from dashboard, nav state is { id, fromDashboardEdit }
+    //    with no form fields — so sessionStorage data wins for those.
+    if (state) source = source ? { ...source, ...state } : state;
+
     if (!source) return;
 
     setTitle(source.title || "");
@@ -99,12 +96,30 @@ export default function EventCreateForm() {
 
     setCategory(source.category || "party");
     setLocationField(source.location || "");
+    setLat(source.lat ?? null);
+    setLng(source.lng ?? null);
     setOnlineUrl(source.online_url || "");
     setPrice(source.price || "");
 
-    // Blob URLs are still valid within the same SPA session
-    if (source.image_url) setPreviewUrl(source.image_url);
+    // Only restore real uploaded https:// URLs.
+    // Blob: URLs and the "__draft_image__" marker are handled by the mount
+    // effect below (which re-creates a fresh URL from draftFileStore).
+    if (source.image_url && source.image_url.startsWith("https://")) {
+      setPreviewUrl(source.image_url);
+    }
   }, [state]);
+
+  // Re-create a fresh blob URL from draftFileStore every time the form mounts.
+  // Chrome can invalidate blob URLs after navigation; creating a new one from
+  // the in-memory Blob guarantees the thumbnail always renders correctly.
+  useEffect(() => {
+    const file = draftFileStore.get();
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── TipTap ──────────────────────────────────────────────────────────────
   const editor = useEditor({
@@ -122,15 +137,6 @@ export default function EventCreateForm() {
     editor.commands.setContent(description);
   }, [editor, description]);
 
-  // ── Image picker ────────────────────────────────────────────────────────
-  async function handleFileChange(e) {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
-    const optimized = await resizeAndCompressImage(selected);
-    draftFileStore.set(optimized);                // kept in memory for publish
-    setPreviewUrl(URL.createObjectURL(optimized)); // blob URL for immediate preview
-  }
-
   // ── Navigate to review ──────────────────────────────────────────────────
   // Image is NOT uploaded here — the blob URL travels with the draft and the
   // actual Supabase upload happens when the user hits Publish in ReviewEvent.
@@ -146,21 +152,36 @@ export default function EventCreateForm() {
     if (resolvedEventFormat === "in_person" && !locationField) return showToast("Address is required.");
     if (resolvedEventFormat === "online"    && !onlineUrl)     return showToast("Link is required.");
     if (resolvedIsPaid && (!price || Number(price) <= 0))      return showToast("Invalid price.");
+    // User picked a photo but hasn't tapped "✓ Use this" — block navigation so
+    // the image is not silently lost (common mistake on mobile).
+    if (cropPending) return showToast("Tap '✓ Use this' to confirm your cover photo first");
+
+    // Convert the datetime-local string (local time, no TZ) to a proper UTC
+    // ISO string so PostgreSQL stores the right moment in time.
+    // new Date("2026-03-04T17:30") in the browser → local time → toISOString()
+    // → UTC offset applied → feed + edit form both show the same local time.
+    const eventDateUTC = new Date(eventDate).toISOString();
 
     const draft = {
-      event_id:     state?.event_id ?? null,
+      event_id:     state?.event_id ?? state?.id ?? null,
       title,
       description,
-      event_date:   eventDate,
+      event_date:   eventDateUTC,
       category,
       location:     locationField,
+      lat:          lat,
+      lng:          lng,
       online_url:   onlineUrl,
       price:        resolvedIsPaid ? price : null,
       is_paid:      resolvedIsPaid,
       is_public:    resolvedIsPublic,
       event_format: resolvedEventFormat,
-      // blob URL or existing http URL — upload happens at publish time
-      image_url:    previewUrl || "",
+      // Never store a blob: URL in the draft — those become stale after
+      // navigation / cleanup. Use a marker so ReviewEvent knows to grab
+      // the file from draftFileStore instead of trying to load a blob URL.
+      image_url: draftFileStore.get()
+        ? "__draft_image__"
+        : (previewUrl && previewUrl.startsWith("https://") ? previewUrl : ""),
     };
 
     sessionStorage.setItem(DRAFT_SESSION_KEY, JSON.stringify(draft));
@@ -171,8 +192,12 @@ export default function EventCreateForm() {
   return (
     <div className={styles.container}>
       <div className={styles.processHeader}>
-        <div className={styles.processTitle}>Create Event</div>
-        <div className={styles.processStep}>Step 4 of 5 · Details</div>
+        <div className={styles.processTitle}>
+          {state?.fromDashboardEdit ? "Edit Event" : "Create Event"}
+        </div>
+        <div className={styles.processStep}>
+          {state?.fromDashboardEdit ? "Edit Details" : "Step 4 of 5 · Details"}
+        </div>
       </div>
 
       <h2 className={styles.title}>Event Details</h2>
@@ -218,12 +243,14 @@ export default function EventCreateForm() {
       </div>
 
       {resolvedEventFormat === "in_person" && (
-        <div className={styles.card}>
-          <input
-            className={styles.input}
-            placeholder="Address"
+        <div className={`${styles.card} ${styles.locationCard}`}>
+          <LocationMapPicker
             value={locationField}
-            onChange={(e) => setLocationField(e.target.value)}
+            onChange={(addr, newLat, newLng) => {
+              setLocationField(addr);
+              setLat(newLat);
+              setLng(newLng);
+            }}
           />
         </div>
       )}
@@ -252,22 +279,34 @@ export default function EventCreateForm() {
       )}
 
       <div className={styles.card}>
-        <label className={styles.fileLabel}>
-          {previewUrl ? (
-            <img src={previewUrl} className={styles.preview} alt="preview" />
-          ) : (
-            "Choose a cover image"
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className={styles.fileInput}
+        {/* ── Cover image: thumbnail + swap, OR full crop picker ── */}
+        {previewUrl && !showCropPicker ? (
+          <div className={styles.coverPreviewWrap}>
+            <img src={previewUrl} className={styles.coverThumb} alt="cover" />
+            <button
+              type="button"
+              className={styles.changeCoverBtn}
+              onClick={() => setShowCropPicker(true)}
+            >
+              ✎ Change / Recrop
+            </button>
+          </div>
+        ) : (
+          <PhotoCropPicker
+            onCrop={(blob, url) => {
+              draftFileStore.set(blob);
+              setPreviewUrl(url);
+              setCropPending(false);
+              setShowCropPicker(false);
+            }}
+            onPendingChange={setCropPending}
           />
-        </label>
+        )}
       </div>
 
-      <Button onClick={goToReview}>Review Event</Button>
+      <Button onClick={goToReview}>
+        {state?.fromDashboardEdit ? "Review Changes" : "Review Event"}
+      </Button>
 
       {ToastComponent}
     </div>

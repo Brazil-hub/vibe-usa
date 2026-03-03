@@ -39,7 +39,9 @@ export async function getEventById(id) {
 //
 
 export async function listPublicEvents() {
-  // ✅ Fonte da verdade: VIEW já normaliza data + timezone + “hoje até 23:59”
+  // Uses the public_events_feed VIEW which handles RLS, timezone
+  // normalisation and approved-status filtering correctly.
+  // The client-side isEventStillVisible then applies the "1 AM next day" rule.
   const { data, error } = await supabase
     .from("public_events_feed")
     .select("*")

@@ -65,13 +65,16 @@
    LOGO
 ================================================= */
 .logo {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 900;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.4px;
+  white-space: nowrap;
 
-  background: linear-gradient(90deg, var(--pink-500), #7b61ff);
+  background: linear-gradient(90deg, var(--pink-500) 0%, #7b61ff 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+  cursor: pointer;
 }
 
 /* =================================================
